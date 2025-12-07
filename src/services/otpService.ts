@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 
 // simple template generator (HTML + plain)
 const buildEmail = ({ name, otp, ttlMinutes }: { name?: string, otp: string, ttlMinutes: number }) => {

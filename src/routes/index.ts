@@ -8,7 +8,6 @@ import authRoutes from './auth.routes';
 import otpRoutes from './otp.routes';
 import decryptDebug from './decrypt.debug';     // debug decrypt route (public)
 // protected
-import userRoutes from './user.routes';
 import adminRoutes from './admin.routes';
 import contractorRoutes from './contractor.routes';
 import tenderRoutes from './tender.routes';
@@ -27,9 +26,9 @@ router.get('/', (req, res) => res.json({ message: 'Tender API' }));
 router.get('/health', (req, res) => res.json({ ok: true }));
 
 //  Protected routes
-// router.use(verifyJwt);
-router.use('/admin', adminRoutes);
-router.use('/tender', tenderRoutes);
+router.use(verifyJwt);
+router.use('/admin', requireRole('admin'), adminRoutes);
+router.use('/tender', requireRole('admin', 'contractor'), tenderRoutes);
 router.use('/contractor', contractorRoutes);
 
 export default router;
