@@ -4,7 +4,6 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import config from "../config";
-import jwt, { Secret, SignOptions } from "jsonwebtoken";
 
 import User from "../models/User";
 import Otp from "../models/Otp";
@@ -57,8 +56,8 @@ export async function signup(req: Request, res: Response) {
         });
       }
 
-      const hashed = await bcrypt.hash(body.password, 10);
 
+      const hashed = await bcrypt.hash(body.password, 10);
       user = await User.create({
         email,
         password: hashed,
@@ -227,29 +226,21 @@ export async function login(req: Request, res: Response) {
 
     const emailNormalized = String(email).toLowerCase().trim();
 
-    const user = await User.findOne({
-      email: emailNormalized,
-      isDeleted: false,
-    })
-      .select("+password email role isActive isDeleted name")
-      .exec();
+    const user = await User.findOne({ email: emailNormalized, isDeleted: false }).select("+password");
 
     if (!user)
       return res.status(200).json({ success: false, status: 404, message: "user not found" });
 
     const ok = await bcrypt.compare(String(password), user.password || "");
+
     if (!ok)
       return res.status(200).json({ success: false, status: 401, message: "invalid credentials" });
 
     if (user.isDeleted)
-      return res
-        .status(200)
-        .json({ success: false, status: 403, message: "account removed" });
+      return res.status(200).json({ success: false, status: 403, message: "account removed" });
 
     if (!user.isActive)
-      return res
-        .status(200)
-        .json({ success: false, status: 403, message: "account not active" });
+      return res.status(200).json({ success: false, status: 403, message: "account not active" });
 
     await ensureRoleDoc(user);
 
