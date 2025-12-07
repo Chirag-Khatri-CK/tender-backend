@@ -5,11 +5,12 @@ import config from './config/index';
 import logger from './utils/logger';
 import correlation from './middlewares/correlationId';
 import encryptionMiddleware from './middlewares/encryption';
-
+import corsMiddleware from "./middlewares/cors";
  // Routes
 import routes from "./routes/index";
 
 const app = express();
+app.use(corsMiddleware);
 app.use(bodyParser.json({ limit: '2mb' }));
 app.use(encryptionMiddleware(config));
 app.use(correlation);
