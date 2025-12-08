@@ -31,6 +31,10 @@ const UserSchema = new mongoose.Schema(
     emailVerified: { type: Boolean, default: false },
     phoneVerified: { type: Boolean, default: false },
     name: { type: String },
+    isPremiumMember: { type: Boolean, default: false },
+    subscribeAt: { type: Date },
+    premiumExpiresAt: { type: Date },
+    premiumPlan: { type: String, enum: ["MONTHLY", "YEARLY", "LIFETIME"], default: null },
   },
   { timestamps: true }
 );

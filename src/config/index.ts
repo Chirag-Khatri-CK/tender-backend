@@ -51,6 +51,7 @@ type AppConfig = {
         allowedOrigins: string[];
         allowCredentials: boolean;
     };
+    premiumDays: number
 };
 
 const config: AppConfig = {
@@ -122,6 +123,7 @@ const config: AppConfig = {
         allowedOrigins: (process.env.CORS_ALLOWED_ORIGINS || "*").split(","),
         allowCredentials: process.env.CORS_ALLOW_CREDENTIALS === "true",
     },
+    premiumDays: Number(process.env.PREMIUM_DAYS) || 365
 };
 
 export default config;

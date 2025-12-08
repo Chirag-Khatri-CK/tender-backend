@@ -141,7 +141,7 @@ const TenderSchema = new mongoose.Schema({
     isDeleted: { type: Boolean, default: false },
     slug: { type: String, default: "" },
     adminId: { type: Schema.Types.ObjectId, ref: "Admin", default: null },
-    status: { type: String, enum: ["DRAFT", "ACTIVE", "CANCELLED", "CLOSED", "ARCHIVED"], default: "ACTIVE" },
+    status: { type: String, enum: ["DRAFT", "PUBLISHED", "CANCELLED", "CLOSED", "ARCHIVED"], default: "PUBLISHED" },
     cancelReason: { type: String, default: "" },
     cancelTime: { type: Date, default: null },
     tenderId: { type: String, default: "" },

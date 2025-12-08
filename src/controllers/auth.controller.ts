@@ -52,7 +52,7 @@ export async function signupController(
   role: string = "contractor",
   method: string = "email"
 ) {
-  if (!email) throw new AppError(400, "email required");
+  if (!email || !phone) throw new AppError(400, "contact required");
 
   const emailNorm = email.toLowerCase().trim();
   let user = await User.findOne({ email: emailNorm });
@@ -61,10 +61,10 @@ export async function signupController(
   if (password) {
     if (user) throw new AppError(400, "user already exists");
 
-    const passCheck = passwordIsValid(password);
-    if (!passCheck.success) {
-      throw new AppError(400, passCheck.reason || "invalid password");
-    }
+    // const passCheck = passwordIsValid(password);
+    // if (!passCheck.success) {
+    //   throw new AppError(400, passCheck.reason || "invalid password");
+    // }
 
     const hashed = await bcrypt.hash(password, 10);
 

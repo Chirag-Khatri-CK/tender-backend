@@ -13,12 +13,23 @@ export const USER_UPDATABLE_FIELDS = [
     "phoneVerified",
     "name",
     "isActive",
+    "isPremiumMember"
 ];
 
 type UpdateUserAndSplitArgs = {
     userId: string;
     body: Record<string, any>;
 };
+
+
+const PREMIUM_DAYS = 30;
+
+function addDays(date: Date, days: number) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + days);
+    return d;
+}
+
 
 export async function updateUserAndSplit({ userId, body }: UpdateUserAndSplitArgs) {
     if (!Types.ObjectId.isValid(userId)) {
@@ -39,6 +50,17 @@ export async function updateUserAndSplit({ userId, body }: UpdateUserAndSplitArg
             restBody[key] = value;
         }
     });
+
+    if ("isPremiumMember" in userBody) {
+        const active = Boolean(userBody.isPremiumMember);
+        if (active) {
+            const now = new Date();
+            userBody.subscribeAt = now;
+            userBody.premiumExpiresAt = addDays(now, PREMIUM_DAYS);
+        } else {
+            userBody.premiumExpiresAt = null;
+        }
+    }
 
     let updatedUser = null;
 

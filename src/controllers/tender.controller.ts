@@ -92,7 +92,7 @@ export async function getTenderController(params: {
 export async function listTendersController(query: any) {
   const {
     procurementCategory,
-    sort = "createdAt:desc",
+    sort = "createdAt",
     limit = "20",
     skip,
     page = "1",
@@ -101,10 +101,15 @@ export async function listTendersController(query: any) {
   } = query as Record<string, string>;
 
   const match: any = { isDeleted: false };
+
   if (procurementCategory) {
     match["generalInformation.procurementCategory"] = procurementCategory;
   }
-  if (status) match["status"] = status;
+
+  if (status) {
+    match["status"] = status;
+  }
+
   if (q) {
     const re = new RegExp(String(q).trim(), "i");
     match.$or = [
@@ -115,19 +120,16 @@ export async function listTendersController(query: any) {
     ];
   }
 
-  const sortObj: any = {};
-  String(sort)
-    .split(",")
-    .forEach((s) => {
-      const [k, dir] = s.split(":").map((x) => x.trim());
-      if (!k) return;
-      sortObj[k] = dir === "asc" || dir === "1" ? 1 : -1;
-    });
+  let sortDirection = -1;
+  if (sort) {
+    const dir = String(sort).trim().toLowerCase();
+    if (dir === "asc") sortDirection = 1;
+    if (dir === "desc") sortDirection = -1;
+  }
 
-  const numericLimit = Math.max(
-    1,
-    Math.min(100, parseInt(limit as string, 10) || 20)
-  );
+  const sortObj = { createdAt: sortDirection };
+
+  const numericLimit = Math.max(1, Math.min(100, parseInt(limit as string, 10) || 20));
   let numericSkip = 0;
 
   if (skip !== undefined) {
@@ -137,10 +139,27 @@ export async function listTendersController(query: any) {
     numericSkip = (numericPage - 1) * numericLimit;
   }
 
-  const [items, total] = await Promise.all([
-    Tender.find(match).sort(sortObj).skip(numericSkip).limit(numericLimit).lean(),
-    Tender.countDocuments(match),
-  ]);
+  const pipeline: any[] = [
+    { $match: match },
+    { $sort: sortObj },
+    {
+      $facet: {
+        items: [
+          { $skip: numericSkip },
+          { $limit: numericLimit },
+        ],
+        total: [
+          { $count: "count" },
+        ],
+      },
+    },
+  ];
+
+  const aggResult = await Tender.aggregate(pipeline).exec();
+  const facet = aggResult[0] || { items: [], total: [] };
+
+  const items = facet.items || [];
+  const total = Array.isArray(facet.total) && facet.total[0] && facet.total[0].count ? facet.total[0].count : 0;
 
   const currentPage =
     skip !== undefined
