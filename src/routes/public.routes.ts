@@ -10,6 +10,9 @@ router.get("/health", (req, res) => res.json({ ok: true }));
 
 router.get("/tenders", async (req, res) => {
   try {
+    if (req.query.status && String(req.query.status).toLowerCase() === "draft") {
+      req.query.status = "PUBLISHED";
+    }
     const out = await listTendersController(req.query);
     return res.json(out);
   } catch (err: any) {
