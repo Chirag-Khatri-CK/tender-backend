@@ -1,16 +1,103 @@
-Nice — this project is a production-grade skeleton for your tender website backend.
+# Tender Backend (Node.js + Express + TypeScript)
 
-What's included:
-- Signup/Login with password or OTP (email/sms mock)
-- Strong password policy (8-32 chars, no spaces, upper/lower/number)
-- Nodemailer template for OTP emails (HTML + plain text)
-- Pluggable SMS (mock + hint for Twilio)
-- JWT auth and role-based middleware
-- Winston structured logging (console + file)
-- Rate-limits and validation for OTP endpoints
+Production-ready backend with:
+- JWT authentication  
+- OTP verification  
+- Admin / Contractor / Engineer roles  
+- Tender CRUD (aggregation + pagination)  
+- Contractor CRUD (aggregation)  
+- Premium membership handling  
+- Clean controller-service architecture  
+- Config-based environment  
 
-Place your credentials in .env (copy .env.example -> .env) and run `npm install` then `npm run dev`.
+---
 
-Logger usage:
-- `src/utils/logger.ts` exports `logger` — use `logger.info('message', { meta })`, `logger.error(err)`.
-- Logs are kept in `logs/combined.log` and `logs/error.log`.
+## 📁 Project Structure
+
+```
+src/
+  controllers/
+  routes/
+  models/
+  middlewares/
+  utils/
+  config/
+```
+
+Controllers contain **pure logic**, routes handle **req/res** + errors.
+
+---
+
+## ⚙️ Environment Variables (`.env`)
+
+```
+PORT=5000
+MONGO_URL=mongodb://localhost:27017/tender
+JWT_SECRET=supersecret
+OTP_DIGITS=6
+OTP_TTL_MINUTES=5
+PREMIUM_DAYS=365
+```
+
+---
+
+## 🔐 Auth Endpoints
+
+- `POST /auth/signup`
+- `POST /auth/login`
+- `POST /auth/request-otp`
+- `POST /auth/verify-contact`
+
+---
+
+## 📄 Tender Endpoints
+
+Public:
+- `GET /tender/list`
+- `GET /tender/:id`
+
+Protected:
+- `POST /tender`
+- `PATCH /tender/:id`
+- `DELETE /tender/:id`
+- `POST /tender/:id/cancel`
+
+---
+
+## 👤 Contractor Endpoints
+
+- `GET /contractor/list`
+- `GET /contractor/:id`
+- `POST /contractor`
+- `PATCH /contractor/:id`
+
+---
+
+## 💎 Premium Logic
+
+When `isPremiumMember = true`:
+- `subscribeAt = now`
+- `premiumExpiresAt = now + PREMIUM_DAYS`
+
+When `false`:
+- `premiumExpiresAt = null`
+
+---
+
+## ▶️ Start
+
+```
+npm install
+npm run dev
+```
+
+Server runs at:
+
+```
+http://localhost:5000
+```
+
+---
+
+## ✔️ Status: Ready for production
+
