@@ -1,7 +1,50 @@
-import { Router } from 'express';
-import { createContractor, getContractor } from '../controllers/contractor.controller';
-import requireRole from '../middlewares/requireRole';
+import { Router } from "express";
+import {
+  createContractorController,
+  getContractorController,
+  updateContractorController,
+} from "../controllers/contractor.controller";
+import requireRole from "../middlewares/requireRole";
+import { AppError } from "../utils/AppError";
+
 const router = Router();
-router.post('/', requireRole('admin','contractor'), createContractor);
-router.get('/:id', getContractor);
+
+router.post(
+  "/",
+  requireRole("admin", "contractor"),
+  async (req, res) => {
+    try {
+      const out = await createContractorController(req.body);
+      return res.json(out);
+    } catch (err: any) {
+      const status = err instanceof AppError ? err.status : 400;
+      return res.status(status).json({ message: err.message });
+    }
+  }
+);
+
+router.patch("/:id", async (req, res) => {
+  try {
+    const out = await updateContractorController(req.params.id, req.body);
+    return res.json(out);
+  } catch (err: any) {
+    const status = err instanceof AppError ? err.status : 500;
+    return res.status(status).json({
+      success: false,
+      status,
+      message: err.message || "Server error",
+    });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const out = await getContractorController(req.params.id);
+    return res.json(out);
+  } catch (err: any) {
+    const status = err instanceof AppError ? err.status : 400;
+    return res.status(status).json({ message: err.message });
+  }
+});
+
 export default router;
