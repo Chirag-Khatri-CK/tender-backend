@@ -7,6 +7,7 @@ import requireRole from '../middlewares/requireRole';
 import authRoutes from './auth.routes';
 import otpRoutes from './otp.routes';
 import decryptDebug from './decrypt.debug';     // debug decrypt route (public)
+import pubicRoutes from "./public.routes";
 // protected
 import adminRoutes from './admin.routes';
 import contractorRoutes from './contractor.routes';
@@ -16,15 +17,10 @@ const router = Router();
 
 // --- Public routes (no auth) ---
 // Decrypt debug route: keep it public only in dev/qa or protect it strongly in prod
+router.use('/', pubicRoutes);
 router.use('/debug/decrypt', decryptDebug);
 router.use('/auth', authRoutes);
 router.use('/otp', otpRoutes);
-
-router.get('/', (req, res) => res.json({ message: 'Tender API' }));
-
-// Health - keep it here if you want it subject to encryption
-router.get('/health', (req, res) => res.json({ ok: true }));
-
 //  Protected routes
 router.use(verifyJwt);
 router.use('/admin', requireRole('admin'), adminRoutes);
