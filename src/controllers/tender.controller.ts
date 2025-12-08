@@ -120,14 +120,14 @@ export async function listTendersController(query: any) {
     ];
   }
 
-  const sortObj: any = {};
-  String(sort)
-    .split(",")
-    .forEach((s) => {
-      const [k, dir] = s.split(":").map((x) => x.trim());
-      if (!k) return;
-      sortObj[k] = dir === "asc" || dir === "1" ? 1 : -1;
-    });
+  let sortDirection = -1;
+  if (sort) {
+    const dir = String(sort).trim().toLowerCase();
+    if (dir === "asc") sortDirection = 1;
+    if (dir === "desc") sortDirection = -1;
+  }
+
+  const sortObj = { createdAt: sortDirection };
 
   const numericLimit = Math.max(1, Math.min(100, parseInt(limit as string, 10) || 20));
   let numericSkip = 0;

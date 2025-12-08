@@ -37,6 +37,17 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
+
+router.get("/list", async (req, res) => {
+  try {
+    const out = await getContractorController(req.params.id);
+    return res.json(out);
+  } catch (err: any) {
+    const status = err instanceof AppError ? err.status : 400;
+    return res.status(status).json({ message: err.message });
+  }
+});
+
 router.get("/:id", async (req, res) => {
   try {
     const out = await getContractorController(req.params.id);
@@ -46,5 +57,6 @@ router.get("/:id", async (req, res) => {
     return res.status(status).json({ message: err.message });
   }
 });
+
 
 export default router;

@@ -11,13 +11,9 @@ const ContractorSchema = new mongoose.Schema(
     },
     companyName: { type: String },
     gstNumber: { type: String },
-    contactPerson: { type: String },
-    contactNumber: { type: String },
     engineerIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Engineer' }],
     isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false },
-    emailVerified: { type: Boolean, default: false },
-    phoneVerified: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

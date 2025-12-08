@@ -45,3 +45,90 @@ export async function getContractorController(id: string) {
 
   return { contractor };
 }
+
+export async function listContractorsController(query: any) {
+  const {
+    q,
+    sort = "createdAt",
+    limit = "20",
+    skip,
+    page = "1",
+    isActive,
+    isDeleted,
+  } = query as Record<string, string>;
+
+  const match: any = {};
+
+  if (isDeleted !== undefined) {
+    match.isDeleted = String(isDeleted).toLowerCase() === "true";
+  } else {
+    match.isDeleted = false;
+  }
+
+  if (isActive !== undefined) {
+    match.isActive = String(isActive).toLowerCase() === "true";
+  }
+
+  // Search by q: companyName, gstNumber, contactPerson, contactNumber
+  if (q) {
+    const re = new RegExp(String(q).trim(), "i");
+    match.$or = [
+      { companyName: re },
+      { gstNumber: re },
+      { contactPerson: re },
+      { contactNumber: re },
+    ];
+  }
+
+  let sortDirection = -1;
+  if (sort) {
+    const dir = String(sort).trim().toLowerCase();
+    if (dir === "asc") sortDirection = 1;
+    if (dir === "desc") sortDirection = -1;
+  }
+
+  const sortObj = { createdAt: sortDirection };
+
+  const numericLimit = Math.max(1, Math.min(100, parseInt(limit as string, 10) || 20));
+  let numericSkip = 0;
+
+  if (skip !== undefined) {
+    numericSkip = Math.max(0, parseInt(skip as string, 10) || 0);
+  } else if (page !== undefined) {
+    const numericPage = Math.max(1, parseInt(page as string, 10) || 1);
+    numericSkip = (numericPage - 1) * numericLimit;
+  }
+
+  const pipeline: any[] = [
+    { $match: match },
+    { $sort: sortObj },
+    {
+      $facet: {
+        items: [{ $skip: numericSkip }, { $limit: numericLimit }],
+        total: [{ $count: "count" }],
+      },
+    },
+  ];
+
+  const aggResult = await Contractor.aggregate(pipeline).exec();
+  const facet = aggResult[0] || { items: [], total: [] };
+
+  const items = facet.items || [];
+  const total = Array.isArray(facet.total) && facet.total[0] && facet.total[0].count ? facet.total[0].count : 0;
+
+  const currentPage =
+    skip !== undefined
+      ? Math.floor(numericSkip / numericLimit) + 1
+      : Math.max(1, parseInt(page as string, 10) || 1);
+
+  return {
+    success: true,
+    data: items,
+    meta: {
+      total,
+      limit: numericLimit,
+      skip: numericSkip,
+      page: currentPage,
+    },
+  };
+}
