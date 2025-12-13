@@ -2,16 +2,15 @@ import { Router } from "express";
 import {
   createContractorController,
   getContractorController,
+  listContractorsController,
   updateContractorController,
 } from "../controllers/contractor.controller";
-import requireRole from "../middlewares/requireRole";
 import { AppError } from "../utils/AppError";
 
 const router = Router();
 
 router.post(
-  "/",
-  requireRole("admin", "contractor"),
+"/",
   async (req, res) => {
     try {
       const out = await createContractorController(req.body);
@@ -40,7 +39,7 @@ router.patch("/:id", async (req, res) => {
 
 router.get("/list", async (req, res) => {
   try {
-    const out = await getContractorController(req.params.id);
+    const out = await listContractorsController(req.query);
     return res.json(out);
   } catch (err: any) {
     const status = err instanceof AppError ? err.status : 400;

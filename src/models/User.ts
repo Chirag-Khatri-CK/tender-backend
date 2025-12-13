@@ -43,6 +43,7 @@ UserSchema.index({ _id: 1, isDeleted: 1 });
 UserSchema.index({ email: 1, isDeleted: 1 });
 UserSchema.index({ isActive: 1, isDeleted: 1 });
 UserSchema.index({ role: 1, status: 1 });
+UserSchema.index({ _id: 1, isDeleted: 1, isPremiumMember: 1 });
 UserSchema.index({ createdAt: -1 });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);
