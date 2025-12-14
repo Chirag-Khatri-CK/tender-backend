@@ -36,6 +36,11 @@ export async function updateUserAndSplit({ userId, body }: UpdateUserAndSplitArg
         throw new Error("Invalid user id");
     }
 
+    const user = await User.findById(userId);
+    if (!user || user.isDeleted) {
+        throw new Error("User not found");
+    }
+    
     const incoming = { ...body };
     const fieldsToDelete = ["_id", "isDeleted"];
     fieldsToDelete.forEach((f) => delete incoming[f]);
@@ -52,15 +57,19 @@ export async function updateUserAndSplit({ userId, body }: UpdateUserAndSplitArg
     });
 
     if ("isPremiumMember" in userBody) {
-        const active = Boolean(userBody.isPremiumMember);
-        if (active) {
+        const wasPremium = Boolean(user.isPremiumMember);
+        const willBePremium = Boolean(userBody.isPremiumMember);
+        if (!wasPremium && willBePremium) {
             const now = new Date();
             userBody.subscribeAt = now;
             userBody.premiumExpiresAt = addDays(now, PREMIUM_DAYS);
-        } else {
+        }
+
+        if (wasPremium && !willBePremium) {
             userBody.premiumExpiresAt = null;
         }
     }
+
 
     let updatedUser = null;
 
