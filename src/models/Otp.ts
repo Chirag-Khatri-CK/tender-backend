@@ -4,7 +4,7 @@ const OtpSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", index: true },
     identifier: { type: String, index: true }, // email || phone
-    codeHash: { type: String, required: true },
+    otpHash: { type: String, required: true },
     method: { type: String, enum: ["email", "sms"], default: "email" },
     purpose: {
       type: String,
