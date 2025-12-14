@@ -145,8 +145,8 @@ export async function signupController(
 
 /* ---------------------------- LOGIN ---------------------------- */
 export async function loginController(email: string, password: string, phone: string) {
-  if (!email || !phone) throw new AppError(400, "contact required");
-  if (!email || !password) throw new AppError(400, "email and password required");
+  if(!email && !phone) throw new AppError(400, "email/phone required");
+  if (!password) throw new AppError(400, "password required");
 
   const emailNorm = email.toLowerCase().trim();
   const phoneNorm = phone ? phone.trim() : undefined;
