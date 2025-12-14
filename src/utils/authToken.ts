@@ -6,13 +6,13 @@ import Admin from "../models/Admin";
 import Contractor from "../models/Contractor";
 import Engineer from "../models/Engineer";
 
-export async function getRoleDoc(user: any) {
-    const ROLE_MODELS: Record<string, any> = {
-        admin: Admin,
-        contractor: Contractor,
-        engineer: Engineer
-    };
+const ROLE_MODELS: Record<string, any> = {
+  admin: Admin,
+  contractor: Contractor,
+  engineer: Engineer,
+};
 
+export async function getRoleDoc(user: any) {
     const Model = ROLE_MODELS[user.role];
     if (!Model) throw new Error(`Unknown role: ${user.role}`);
 
@@ -96,3 +96,15 @@ export async function getUserWithRole(Model: Model<any>, id: string) {
 
     return result[0];
 };
+
+/* ---------------------------- Ensure Role Doc ---------------------------- */
+export async function ensureRoleDoc(user: any) {
+    const Model = ROLE_MODELS[user.role];
+    if (!Model) throw new Error(`Unknown role: ${user.role}`);
+
+    const exists = await Model.findOne({ userId: user._id });
+    if (exists) return;
+
+    await Model.create({ userId: user._id });
+}
+

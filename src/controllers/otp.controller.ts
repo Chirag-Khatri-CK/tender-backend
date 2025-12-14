@@ -1,65 +1,137 @@
-import Otp from "../models/Otp";
 import bcrypt from "bcryptjs";
 import config from "../config";
+import User from "../models/User";
+import Otp from "../models/Otp";
+import { ensureRoleDoc, generateAuthToken } from "../utils/authToken";
 import { AppError } from "../utils/AppError";
 
-// generate numeric OTP
+/* ======================= Generate Numeric OTP ======================= */
 function genOtp(digits = 6) {
   const max = 10 ** digits;
-  const n = Math.floor(Math.random() * max)
-    .toString()
-    .padStart(digits, "0");
-  return n;
+  return Math.floor(Math.random() * max).toString().padStart(digits, "0");
 }
 
-export async function requestOtpController(
-  userId: string,
-  method: string = "email"
-) {
-  if (!userId) throw new AppError(400, "userId required");
-
-  const digits = config.otp?.digits || 6;
-  const ttl = config.otp?.ttlMinutes || 5;
-
-  const code = genOtp(digits);
-  const codeHash = await bcrypt.hash(code, 10);
-  const expiresAt = new Date(Date.now() + ttl * 60 * 1000);
-
-  const otp = await Otp.create({
-    userId,
-    codeHash,
-    method: method || "email",
-    expiresAt,
-  });
-
-  return {
-    ok: true,
-    otpId: otp._id,
-    code,
-  };
+/* ======================= Send OTP  ======================= */
+async function sendOtp({ to, code, method }: { to: string; code: string; method: "email" | "phone" }) {
+  console.log(`Send OTP ${code} to ${to} via ${method}`);
+  // TODO: integrate with email / SMS provider
 }
 
-export async function verifyOtpController(userId: string, code: string) {
-  if (!userId || !code) {
-    throw new AppError(400, "userId and code required");
+/* ======================= REQUEST OTP ======================= */
+export async function requestOtpHandler(body: any) {
+  try {
+    const { identifier, method = "email", purpose = "auth", role } = body;
+    if (!identifier) throw new AppError(400, "Identifier required");
+
+    const digits = config.otp?.digits || 6;
+    const ttlMinutes = purpose === "auth" ? config.otp?.ttlMinutes || 5 : 10;
+
+    let user = await User.findOne({ $or: [{ email: identifier }, { phone: identifier }], isDeleted: false });
+
+    // Signup flow: create user if doesn't exist
+    if (!user && purpose === "auth") {
+      if (!role) throw new AppError(400, "Role required for signup");
+      user = await User.create({
+        email: method === "email" ? identifier : undefined,
+        phone: method === "phone" ? identifier : undefined,
+        role,
+        isActive: false,
+        status: "pending"
+      });
+    }
+
+    const code = genOtp(digits);
+    const otpHash = await bcrypt.hash(code, 10);
+
+    const otpDoc = await Otp.create({
+      userId: user?._id,
+      identifier,
+      otpHash,
+      method,
+      purpose,
+      expiresAt: new Date(Date.now() + ttlMinutes * 60 * 1000),
+      attempts: 0,
+      used: false
+    });
+
+    await sendOtp({ to: identifier, code, method });
+
+    return {
+      success: true,
+      otpId: otpDoc._id,
+      code: code // remove in production
+    };
+  } catch (err: any) {
+    const status = err instanceof AppError ? err.status : 500;
+    return { success: false, status, message: err.message || "error" };
   }
+}
 
-  const rec = await Otp.findOne({ userId, used: false })
-    .sort({ expiresAt: -1 })
-    .exec();
+/* ======================= VERIFY OTP ========================= */
+export async function verifyOtpHandler(body: any) {
+  try {
+    const { otpId, identifier, code } = body;
+    if (!otpId || !identifier || !code) throw new AppError(400, "Missing required fields");
 
-  if (!rec) throw new AppError(400, "no otp found");
-  if (rec.expiresAt < new Date()) throw new AppError(400, "otp expired");
+    const otp = await Otp.findOne({ _id: otpId, identifier, used: false, expiresAt: { $gt: new Date() } });
+    if (!otp) throw new AppError(400, "Invalid or expired OTP");
 
-  const ok = await bcrypt.compare(code, rec.codeHash);
-  if (!ok) {
-    rec.attempts = (rec.attempts || 0) + 1;
-    await rec.save();
-    throw new AppError(400, "invalid otp");
+    // limit attempts
+    if ((otp.attempts || 0) >= (config.otp?.maxAttempts || 5)) throw new AppError(429, "Too many attempts");
+
+    const isValid = await bcrypt.compare(code, otp.otpHash);
+    if (!isValid) {
+      otp.attempts++;
+      await otp.save();
+      throw new AppError(400, "Invalid OTP");
+    }
+
+    otp.used = true;
+    await otp.save();
+
+    let user = await User.findOne({ $or: [{ email: identifier }, { phone: identifier }] });
+
+    // signup / first-time login
+    if (otp.purpose === "auth") {
+      const wasInactive = !user.isActive;
+
+      if (!user && otp.userId) {
+        user = await User.findById(otp.userId);
+      }
+
+      if (!user) throw new AppError(404, "User not found");
+
+      user.isActive = true;
+      user.status = "active";
+      if (otp.method === "email") user.emailVerified = true;
+      if (otp.method === "phone") user.phoneVerified = true;
+
+      await user.save();
+      await ensureRoleDoc(user);
+
+      const { accessToken, roleId, userId } = await generateAuthToken(user);
+
+      return {
+        success: true,
+        data: {
+          accessToken,
+          user: {
+            roleId, userId, fullName: user.name, isNewUser: wasInactive
+          }
+        }
+      };
+    }
+
+    // verification only
+    if (!user) throw new AppError(404, "User not found");
+
+    if (otp.purpose === "verify_email") user.emailVerified = true;
+    if (otp.purpose === "verify_phone") user.phoneVerified = true;
+    await user.save();
+
+    return { success: true, data: { message: `${otp.purpose.replace("_", " ")} successful` } };
+  } catch (err: any) {
+    const status = err instanceof AppError ? err.status : 500;
+    return { success: false, status, message: err.message || "error" };
   }
-
-  rec.used = true;
-  await rec.save();
-
-  return { ok: true };
 }

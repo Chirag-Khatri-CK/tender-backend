@@ -1,58 +1,20 @@
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
-import config from "../config";
-
 import User from "../models/User";
-import Otp from "../models/Otp";
-import Admin from "../models/Admin";
-import Contractor from "../models/Contractor";
-import Engineer from "../models/Engineer";
-
-import { generateAuthToken } from "../utils/authToken";
+import { ensureRoleDoc, generateAuthToken } from "../utils/authToken";
 import { passwordIsValid } from "../utils/security";
 import { AppError } from "../utils/AppError";
 
-/* ---------------------------- Ensure Role Doc ---------------------------- */
-async function ensureRoleDoc(user: any) {
-  const uid = user._id;
-
-  if (user.role === "admin") {
-    if (!(await Admin.findOne({ userId: uid })))
-      await Admin.create({ userId: uid, permissions: [] });
-  }
-
-  if (user.role === "contractor") {
-    if (!(await Contractor.findOne({ userId: uid })))
-      await Contractor.create({
-        userId: uid,
-        companyName: "",
-        engineerIds: [],
-      });
-  }
-
-  if (user.role === "engineer") {
-    if (!(await Engineer.findOne({ userId: uid })))
-      await Engineer.create({
-        userId: uid,
-        designation: "",
-        department: "",
-      });
-  }
-}
-
 /* ---------------------------- SIGNUP ---------------------------- */
-// supports both:
-// - password signup
-// - otp signup (no password)
 export async function signupController(
   email: string,
-  password?: string,
+  password: string,
   name?: string,
   phone?: string,
-  role: string = "contractor",
-  method: string = "email"
+  role: string = "contractor"
 ) {
-  if (!email || !phone) throw new AppError(400, "contact required");
+  if (!email && !phone) throw new AppError(400, "email/phone required");
+  if (!password) throw new AppError(400, "password required");
+
   const emailNorm = email ? email.toLowerCase().trim() : undefined;
   const phoneNorm = phone ? phone.trim() : undefined;
   const conditions = [
@@ -63,82 +25,41 @@ export async function signupController(
   );
 
   let user = await User.findOne({ isDeleted: false, $or: conditions });
+  if (user) throw new AppError(400, "user already exists");
 
-  // --- PASSWORD SIGNUP ---
-  if (password) {
-    if (user) throw new AppError(400, "user already exists");
+  // const passCheck = passwordIsValid(password);
+  // if (!passCheck.success) {
+  //   throw new AppError(400, passCheck.reason || "invalid password");
+  // }
 
-    // const passCheck = passwordIsValid(password);
-    // if (!passCheck.success) {
-    //   throw new AppError(400, passCheck.reason || "invalid password");
-    // }
+  const hashed = await bcrypt.hash(password, 10);
 
-    const hashed = await bcrypt.hash(password, 10);
-
-    user = await User.create({
-      email: emailNorm,
-      password: hashed,
-      name: name || "",
-      phone: phone || null,
-      role,
-      isActive: true,
-      isDeleted: false,
-      status: "active",
-      emailVerified: true,
-    });
-
-    await ensureRoleDoc(user);
-
-    const { accessToken, roleId, userId } = await generateAuthToken(user);
-
-    return {
-      success: true,
-      status: 200,
-      data: {
-        accessToken, roleId, userId, fullName: user?.name
-      }
-    };
-  }
-
-  // --- OTP SIGNUP FLOW ---
-  if (!user) {
-    user = await User.create({
-      email: emailNorm,
-      name: name || "",
-      phone: phone || null,
-      role,
-      isActive: false,
-      isDeleted: false,
-      status: "pending",
-    });
-  } else if (user.isActive) {
-    throw new AppError(400, "user already active, login instead");
-  }
-
-  const digits = config.otp?.digits || 6;
-  const ttl = config.otp?.ttlMinutes || 5;
-  const code = Math.floor(Math.random() * 10 ** digits)
-    .toString()
-    .padStart(digits, "0");
-
-  const codeHash = crypto.createHash("sha256").update(code).digest("hex");
-  const expiresAt = new Date(Date.now() + ttl * 60 * 1000);
-
-  const otpDoc = await Otp.create({
-    userId: user._id,
-    codeHash,
-    method,
-    attempts: 0,
-    used: false,
-    expiresAt,
+  user = await User.create({
+    email: emailNorm,
+    password: hashed,
+    name: name || "",
+    phone: phone || null,
+    role,
+    isActive: true,
+    isDeleted: false,
+    status: "active",
+    emailVerified: true,
   });
+
+  await ensureRoleDoc(user);
+
+  const { accessToken, roleId, userId } = await generateAuthToken(user);
 
   return {
     success: true,
     status: 200,
-    otpId: otpDoc._id,
-    code, // dev-only; remove in prod
-  };
+    data: {
+      accessToken,
+      user: {
+        roleId, userId, fullName: user.name
+      }
+    }
+  }
 }
 
 /* ---------------------------- LOGIN ---------------------------- */
@@ -172,71 +93,10 @@ export async function loginController(email: string, password: string, phone: st
     success: true,
     status: 200,
     data: {
-      accessToken, roleId, userId, fullName: user?.name
-    }
-  };
-}
-
-/* ---------------------------- VERIFY CONTACT (OTP) ---------------------------- */
-export async function verifyContactController(
-  otpId?: string,
-  userId?: string,
-  code?: string,
-  email?: string
-) {
-  if (!code) throw new AppError(400, "otp code required");
-
-  let otpRec: any = null;
-
-  if (otpId) {
-    otpRec = await Otp.findById(otpId);
-  } else if (userId) {
-    otpRec = await Otp.findOne({ userId, used: false }).sort({
-      createdAt: -1,
-    });
-  } else if (email) {
-    const u = await User.findOne({ email });
-    if (!u) throw new AppError(400, "user not found");
-
-    otpRec = await Otp.findOne({ userId: u._id, used: false }).sort({
-      createdAt: -1,
-    });
-  }
-
-  if (!otpRec) throw new AppError(400, "otp not found");
-  if (otpRec.expiresAt < new Date()) throw new AppError(400, "otp expired");
-  if (otpRec.attempts >= (config.otp?.maxAttempts || 5)) {
-    throw new AppError(400, "otp locked");
-  }
-
-  const providedHash = crypto.createHash("sha256").update(String(code)).digest("hex");
-  if (providedHash !== otpRec.codeHash) {
-    otpRec.attempts++;
-    await otpRec.save();
-    throw new AppError(400, "invalid otp");
-  }
-
-  otpRec.used = true;
-  await otpRec.save();
-
-  const user = await User.findById(otpRec.userId);
-  if (!user) throw new AppError(400, "user missing");
-
-  user.isActive = true;
-  user.status = "active";
-  user.emailVerified = true;
-  if (otpRec.method === "sms") user.phoneVerified = true;
-  await user.save();
-
-  await ensureRoleDoc(user);
-
-  const { accessToken, roleId } = await generateAuthToken(user);
-
-  return {
-    success: true,
-    status: 200,
-    data: {
-      accessToken, roleId, userId, fullName: user?.name
+      accessToken,
+      user: {
+        roleId, userId, fullName: user.name
+      }
     }
   };
 }
