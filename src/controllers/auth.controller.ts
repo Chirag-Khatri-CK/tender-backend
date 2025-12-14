@@ -160,14 +160,16 @@ export async function loginController(email: string, password: string) {
   await ensureRoleDoc(user);
 
   const { token, roleDoc } = await generateAuthToken(user);
+  const { password: p, __v, createdAt, updatedAt, ...userData } = user.toObject();
 
   return {
     success: true,
     status: 200,
-    role: user.role,
     token,
-    data: roleDoc,
+    user: userData,
+    roleData: roleDoc,
   };
+
 }
 
 /* ---------------------------- VERIFY CONTACT (OTP) ---------------------------- */

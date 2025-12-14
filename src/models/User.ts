@@ -34,7 +34,7 @@ const UserSchema = new mongoose.Schema(
     isPremiumMember: { type: Boolean, default: false },
     subscribeAt: { type: Date },
     premiumExpiresAt: { type: Date },
-    premiumPlan: { type: String, enum: ["MONTHLY", "YEARLY", "LIFETIME"], default: null },
+    premiumPlan: { type: String, enum: ["MONTHLY", "YEARLY", "LIFETIME", null], default: null },
   },
   { timestamps: true }
 );
