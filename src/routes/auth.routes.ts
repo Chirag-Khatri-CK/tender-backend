@@ -37,8 +37,8 @@ router.post("/signup", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const result = await loginController(email, password);
+    const { email, password, phone } = req.body;
+    const result = await loginController(email, password, phone);
     return res.status(200).json(result);
   } catch (err: any) {
     const status = err instanceof AppError ? err.status : 500;

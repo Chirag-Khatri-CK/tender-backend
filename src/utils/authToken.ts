@@ -10,11 +10,14 @@ export async function getRoleDoc(user: any) {
 
     switch (user.role) {
         case "admin":
-            return Admin.findOne({ userId }).lean();
+            return Admin.findOne({ userId }).select("-createdAt -updatedAt -__v").lean();
+
         case "contractor":
-            return Contractor.findOne({ userId }).lean();
+            return Contractor.findOne({ userId }).select("-createdAt -updatedAt -__v").lean();
+
         case "engineer":
-            return Engineer.findOne({ userId }).lean();
+            return Engineer.findOne({ userId }).select("-createdAt -updatedAt -__v").lean();
+
         default:
             throw new Error(`Unknown role: ${user.role}`);
     }
@@ -25,7 +28,7 @@ export async function generateAuthToken(user: any) {
     if (!roleDoc) throw new Error(`Role document for ${user.role} not found`);
 
     const payload = {
-        sub: roleDoc._id.toString(), 
+        sub: roleDoc._id.toString(),
         uid: user._id.toString(),
         role: user.role,
     };

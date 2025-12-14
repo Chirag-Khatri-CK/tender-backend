@@ -53,9 +53,16 @@ export async function signupController(
   method: string = "email"
 ) {
   if (!email || !phone) throw new AppError(400, "contact required");
+  const emailNorm = email ? email.toLowerCase().trim() : undefined;
+  const phoneNorm = phone ? phone.trim() : undefined;
+  const conditions = [
+    emailNorm ? { email: emailNorm } : undefined,
+    phoneNorm ? { phone: phoneNorm } : undefined,
+  ].filter(
+    (v): v is { email: string } | { phone: string } => v !== undefined
+  );
 
-  const emailNorm = email.toLowerCase().trim();
-  let user = await User.findOne({ email: emailNorm });
+  let user = await User.findOne({ isDeleted: false, $or: conditions });
 
   // --- PASSWORD SIGNUP ---
   if (password) {
@@ -137,17 +144,20 @@ export async function signupController(
 }
 
 /* ---------------------------- LOGIN ---------------------------- */
-export async function loginController(email: string, password: string) {
-  if (!email || !password) {
-    throw new AppError(400, "email and password required");
-  }
+export async function loginController(email: string, password: string, phone: string) {
+  if (!email || !phone) throw new AppError(400, "contact required");
+  if (!email || !password) throw new AppError(400, "email and password required");
 
   const emailNorm = email.toLowerCase().trim();
+  const phoneNorm = phone ? phone.trim() : undefined;
+  const conditions = [
+    emailNorm ? { email: emailNorm } : undefined,
+    phoneNorm ? { phone: phoneNorm } : undefined,
+  ].filter(
+    (v): v is { email: string } | { phone: string } => v !== undefined
+  );
 
-  const user = await User.findOne({
-    email: emailNorm,
-    isDeleted: false,
-  }).select("+password");
+  let user = await User.findOne({ isDeleted: false, $or: conditions }).select("+password");
 
   if (!user) throw new AppError(404, "user not found");
 

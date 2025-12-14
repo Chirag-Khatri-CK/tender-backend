@@ -16,4 +16,9 @@ const AdminSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+AdminSchema.index({ userId: 1 });
+AdminSchema.index({ isActive: 1, isDeleted: 1 });
+AdminSchema.index({ createdAt: -1 });
+AdminSchema.index({ permissions: 1 });
+
 export default mongoose.models.Admin || mongoose.model('Admin', AdminSchema);
