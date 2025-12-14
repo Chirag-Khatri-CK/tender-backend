@@ -89,16 +89,14 @@ export async function signupController(
 
     await ensureRoleDoc(user);
 
-    const { token, roleDoc } = await generateAuthToken(user);
-    const { password: p, __v, createdAt, updatedAt, ...userData } =
-      user.toObject();
+    const { accessToken, roleId, userId } = await generateAuthToken(user);
 
     return {
       success: true,
       status: 200,
-      token,
-      user: userData,
-      roleData: roleDoc,
+      data: {
+        accessToken, roleId, userId, fullName: user?.name
+      }
     };
   }
 
@@ -145,7 +143,7 @@ export async function signupController(
 
 /* ---------------------------- LOGIN ---------------------------- */
 export async function loginController(email: string, password: string, phone: string) {
-  if(!email && !phone) throw new AppError(400, "email/phone required");
+  if (!email && !phone) throw new AppError(400, "email/phone required");
   if (!password) throw new AppError(400, "password required");
 
   const emailNorm = email.toLowerCase().trim();
@@ -166,20 +164,17 @@ export async function loginController(email: string, password: string, phone: st
 
   if (user.isDeleted) throw new AppError(403, "account removed");
   if (!user.isActive) throw new AppError(403, "account not active");
-
   await ensureRoleDoc(user);
 
-  const { token, roleDoc } = await generateAuthToken(user);
-  const { password: p, __v, createdAt, updatedAt, ...userData } = user.toObject();
+  const { accessToken, roleId, userId } = await generateAuthToken(user);
 
   return {
     success: true,
     status: 200,
-    token,
-    user: userData,
-    roleData: roleDoc,
+    data: {
+      accessToken, roleId, userId, fullName: user?.name
+    }
   };
-
 }
 
 /* ---------------------------- VERIFY CONTACT (OTP) ---------------------------- */
@@ -235,15 +230,13 @@ export async function verifyContactController(
 
   await ensureRoleDoc(user);
 
-  const { token, roleDoc } = await generateAuthToken(user);
-  const { password, __v, createdAt, updatedAt, ...userData } =
-    user.toObject();
+  const { accessToken, roleId } = await generateAuthToken(user);
 
   return {
     success: true,
     status: 200,
-    token,
-    user: userData,
-    roleData: roleDoc,
+    data: {
+      accessToken, roleId, userId, fullName: user?.name
+    }
   };
 }

@@ -1,26 +1,24 @@
 // src/utils/authToken.ts
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import config from "../config";
+import { Types, Model } from "mongoose";
 import Admin from "../models/Admin";
 import Contractor from "../models/Contractor";
 import Engineer from "../models/Engineer";
 
 export async function getRoleDoc(user: any) {
-    const userId = user._id;
+    const ROLE_MODELS: Record<string, any> = {
+        admin: Admin,
+        contractor: Contractor,
+        engineer: Engineer
+    };
 
-    switch (user.role) {
-        case "admin":
-            return Admin.findOne({ userId }).select("-createdAt -updatedAt -__v").lean();
+    const Model = ROLE_MODELS[user.role];
+    if (!Model) throw new Error(`Unknown role: ${user.role}`);
 
-        case "contractor":
-            return Contractor.findOne({ userId }).select("-createdAt -updatedAt -__v").lean();
-
-        case "engineer":
-            return Engineer.findOne({ userId }).select("-createdAt -updatedAt -__v").lean();
-
-        default:
-            throw new Error(`Unknown role: ${user.role}`);
-    }
+    return Model.findOne({ userId: user._id, isDeleted: false })
+        .select("_id")
+        .lean();
 }
 
 export async function generateAuthToken(user: any) {
@@ -39,5 +37,62 @@ export async function generateAuthToken(user: any) {
         { expiresIn: config.jwt.expiresIn } as SignOptions
     );
 
-    return { token, roleDoc, payload };
+    return { accessToken: token, roleId: roleDoc._id.toString(), userId: user._id.toString() };
 }
+
+export async function getUserWithRole(Model: Model<any>, id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+        throw new Error(`Invalid ID`);
+    }
+
+    const result = await Model.aggregate([
+        {
+            $match: {
+                _id: new Types.ObjectId(id),
+                isDeleted: false,
+                isActive: true
+            }
+        },
+        { $limit: 1 },
+        {
+            $lookup: {
+                from: "users",
+                let: { uid: "$userId" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: { $eq: ["$_id", "$$uid"] },
+                            isDeleted: false
+                        }
+                    },
+                    { $unset: ["password", "__v"] }
+                ],
+                as: "user"
+            }
+        },
+        { $unwind: "$user" },
+        {
+            $replaceRoot: {
+                newRoot: {
+                    user: {
+                        $mergeObjects: [
+                            "$user",
+                            {
+                                _id: "$_id",
+                                userId: "$userId",
+                                permissions: "$permissions",
+                                roleId: "$_id"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ]);
+
+    if (!result.length) {
+        throw new Error(`${Model} not found`);
+    }
+
+    return result[0];
+};

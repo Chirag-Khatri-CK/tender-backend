@@ -2,6 +2,7 @@ import Admin from "../models/Admin";
 import { Types } from "mongoose";
 import { updateUserAndSplit } from "./user.controller";
 import { AppError } from "../utils/AppError";
+import { getUserWithRole } from "../utils/authToken";
 
 export async function createAdminController(
   userId: string,
@@ -20,14 +21,14 @@ export async function updateAdminController(
     throw new AppError(400, "Invalid Admin ID");
   }
 
-  const admin = await Admin.findById(id).exec();
+  const admin = await Admin.findById(id);
   if (!admin) {
     throw new AppError(404, "Admin not found");
   }
 
   const { restBody } = await updateUserAndSplit({
     userId: admin.userId.toString(),
-    body,
+    body
   });
 
   if (Object.keys(restBody).length > 0) {
@@ -35,17 +36,25 @@ export async function updateAdminController(
     await admin.save();
   }
 
-  const fresh = await Admin.findById(id).lean();
-  return { admin: fresh };
+  return getAdminController(id, "Admin updated successfully");
 }
 
-export async function getAdminController(id: string) {
+export async function getAdminController(
+  id: string,
+  message = "Admin fetched successfully"
+) {
   if (!Types.ObjectId.isValid(id)) {
     throw new AppError(400, "Invalid Admin ID");
   }
 
-  const admin = await Admin.findById(id).lean();
-  if (!admin) throw new AppError(404, "not found");
+  const admin = await getUserWithRole(Admin, id);
+  if (!admin) {
+    throw new AppError(404, "Admin not found");
+  }
 
-  return { admin };
+  return {
+    success: true,
+    message,
+    data: admin
+  };
 }

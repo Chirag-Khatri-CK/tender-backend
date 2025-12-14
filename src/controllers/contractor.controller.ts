@@ -2,6 +2,7 @@ import Contractor from "../models/Contractor";
 import { Types } from "mongoose";
 import { updateUserAndSplit } from "./user.controller";
 import { AppError } from "../utils/AppError";
+import { getUserWithRole } from "../utils/authToken";
 
 export async function createContractorController(payload: any) {
   const doc = await Contractor.create(payload);
@@ -31,19 +32,24 @@ export async function updateContractorController(
     await contractor.save();
   }
 
-  const fresh = await Contractor.findById(id).lean();
+  const fresh = await getContractorController(id, "Contrator updated successfully !");
   return { contractor: fresh };
 }
 
-export async function getContractorController(id: string) {
+export async function getContractorController(id: string, message?: string) {
   if (!Types.ObjectId.isValid(id)) {
     throw new AppError(400, "Invalid Contractor ID");
   }
 
-  const contractor = await Contractor.findById(id).lean();
+  const contractor = await getUserWithRole(Contractor, id);
   if (!contractor) throw new AppError(404, "not found");
-
-  return { contractor };
+  return {
+    success: true,
+    message: message  ?? "Contrator fetched successfully",
+    data: {
+      ...contractor
+    },
+  };
 }
 
 export async function listContractorsController(query: any) {
@@ -124,6 +130,7 @@ export async function listContractorsController(query: any) {
   return {
     success: true,
     data: items,
+    message: "Contrators list fetched successfully",
     meta: {
       total,
       limit: numericLimit,
