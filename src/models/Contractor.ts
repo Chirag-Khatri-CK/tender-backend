@@ -9,8 +9,8 @@ const ContractorSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
-    companyName: { type: String },
-    gstNumber: { type: String },
+    companyName: { type: String, default: "" },
+    gstNumber: { type: String, default: "" },
     engineerIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Engineer' }],
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false }

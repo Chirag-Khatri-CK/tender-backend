@@ -54,4 +54,13 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+router.get("/:id", async (req, res) => {
+  try {
+    const out = await getAdminController(req.params.id);
+    return res.json(out);
+  } catch (err: any) {
+    const status = err instanceof AppError ? err.status : 400;
+    return res.status(status).json({ message: err.message });
+  }
+});
 export default router;
