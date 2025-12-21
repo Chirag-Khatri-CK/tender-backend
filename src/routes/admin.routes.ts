@@ -9,7 +9,7 @@ import { AppError } from "../utils/AppError";
 
 const router = Router();
 
-router.get("/dashboard-alaytics", async (req, res) => {
+router.get("/dashboard-analytics", async (req, res) => {
   try {
     const out = await dashboardAnalytics(req.query);
     return res.json(out);
