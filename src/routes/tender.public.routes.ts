@@ -12,7 +12,6 @@ router.get("/list", async (req, res) => {
         if (req.query.status && String(req.query.status).toLowerCase() === "draft") {
             req.query.status = "PUBLISHED";
         }
-        console.log("adasas", req.query);
         const out = await listTendersController(req.query);
         return res.json(out);
     } catch (err: any) {

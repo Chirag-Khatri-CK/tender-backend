@@ -42,7 +42,7 @@ export async function generateAuthToken(user: any) {
 
 export async function getUserWithRole(Model: Model<any>, id: string) {
     if (!Types.ObjectId.isValid(id)) {
-        throw new Error(`Invalid ID`);
+        throw new Error("Invalid ID");
     }
 
     const result = await Model.aggregate([
@@ -57,35 +57,38 @@ export async function getUserWithRole(Model: Model<any>, id: string) {
         {
             $lookup: {
                 from: "users",
-                let: { uid: "$userId" },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: { $eq: ["$_id", "$$uid"] },
-                            isDeleted: false
-                        }
-                    },
-                    { $unset: ["password", "__v"] }
-                ],
+                localField: "userId",
+                foreignField: "_id",
                 as: "user"
             }
         },
         { $unwind: "$user" },
+
+        {
+            $project: {
+                "user.password": 0,
+                "user.__v": 0,
+                "__v": 0,
+            }
+        },
+
         {
             $replaceRoot: {
                 newRoot: {
-                    user: {
-                        $mergeObjects: [
-                            "$user",
-                            {
-                                _id: "$_id",
-                                userId: "$userId",
-                                permissions: "$permissions",
-                                roleId: "$_id"
-                            }
-                        ]
-                    }
+                    $mergeObjects: [
+                        "$user", 
+                        "$$ROOT"
+                    ]
                 }
+            }
+        },
+
+        {
+            $project: {
+                user: 0,
+                status: 0,
+                isActive: 0,
+                isDeleted: 0
             }
         }
     ]);
@@ -95,7 +98,7 @@ export async function getUserWithRole(Model: Model<any>, id: string) {
     }
 
     return result[0];
-};
+}
 
 /* ---------------------------- Ensure Role Doc ---------------------------- */
 export async function ensureRoleDoc(user: any) {

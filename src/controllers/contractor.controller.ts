@@ -59,8 +59,9 @@ export async function listContractorsController(query: any) {
     limit = "20",
     skip,
     page = "1",
-    isActive,
+    isActive = "true",
     isDeleted,
+    isPremium
   } = query as Record<string, string>;
 
   const match: any = {};
@@ -73,6 +74,16 @@ export async function listContractorsController(query: any) {
 
   if (isActive !== undefined) {
     match.isActive = String(isActive).toLowerCase() === "true";
+  }
+
+  const userMatch: any = {};
+
+  if (isPremium === "true") {
+    userMatch["user.isPremiumMember"] = true;
+  }
+
+  if (isPremium === "false") {
+    userMatch["user.isPremiumMember"] = false;
   }
 
   // Search by q: companyName, gstNumber, contactPerson, contactNumber
@@ -107,6 +118,38 @@ export async function listContractorsController(query: any) {
 
   const pipeline: any[] = [
     { $match: match },
+    {
+      $lookup: {
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "user"
+      }
+    },
+    { $unwind: "$user" },
+    Object.keys(userMatch).length ? { $match: userMatch } : null,
+    {
+      $project: {
+        "user.password": 0,
+        "user.__v": 0,
+        "__v": 0
+      }
+    },
+    {
+      $replaceRoot: {
+        newRoot: {
+          $mergeObjects: [
+            "$user",
+            "$$ROOT"
+          ]
+        }
+      }
+    },
+    {
+      $project: {
+        user: 0
+      }
+    },
     { $sort: sortObj },
     {
       $facet: {
@@ -114,7 +157,7 @@ export async function listContractorsController(query: any) {
         total: [{ $count: "count" }],
       },
     },
-  ];
+  ].filter(Boolean);
 
   const aggResult = await Contractor.aggregate(pipeline).exec();
   const facet = aggResult[0] || { items: [], total: [] };

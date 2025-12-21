@@ -42,7 +42,6 @@ export async function signupController(
     role,
     isActive: true,
     isDeleted: false,
-    status: "active",
     emailVerified: true,
   });
 

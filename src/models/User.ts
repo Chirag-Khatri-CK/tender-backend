@@ -21,11 +21,11 @@ const UserSchema = new mongoose.Schema(
       enum: ['admin', 'contractor', 'engineer'],
       required: true,
     },
-    status: {
-      type: String,
-      enum: ['pending', 'active', 'suspended'],
-      default: 'pending',
-    },
+    // status: {
+    //   type: String,
+    //   enum: ['pending', 'active', 'suspended'],
+    //   default: 'pending',
+    // },
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
     emailVerified: { type: Boolean, default: false },

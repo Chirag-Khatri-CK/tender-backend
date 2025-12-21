@@ -4,9 +4,20 @@ import {
   getAdminController,
   updateAdminController,
 } from "../controllers/admin.controller";
+import { dashboardAnalytics } from '../controllers/analytics.controller';
 import { AppError } from "../utils/AppError";
 
 const router = Router();
+
+router.get("/dashboard-alaytics", async (req, res) => {
+  try {
+    const out = await dashboardAnalytics(req.query);
+    return res.json(out);
+  } catch (err: any) {
+    const status = err instanceof AppError ? err.status : 400;
+    return res.status(status).json({ message: err.message });
+  }
+});
 
 router.post("/", async (req, res) => {
   try {

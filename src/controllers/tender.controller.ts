@@ -143,6 +143,23 @@ export async function listTendersController(query: any) {
     { $match: match },
     { $sort: sortObj },
     {
+      $project: {
+        _id: 1,
+        tenderId: 1,
+        description: "$generalInformation.detailedDescription",
+        tenderReferenceNo: "$generalInformation.tenderReferenceNo",
+        department: {
+          $cond: [
+            { $isArray: "$generalInformation.organizationHierarchy" },
+            [{ $arrayElemAt: ["$generalInformation.organizationHierarchy", 1] }],
+            []
+          ]
+        },
+        slug: 1,
+        endDate: "$dateSchedule.bidSubmissionDueDate",
+      }
+    },
+    {
       $facet: {
         items: [
           { $skip: numericSkip },
