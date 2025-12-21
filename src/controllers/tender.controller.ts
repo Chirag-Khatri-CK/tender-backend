@@ -157,6 +157,7 @@ export async function listTendersController(query: any) {
         },
         slug: 1,
         endDate: "$dateSchedule.bidSubmissionDueDate",
+        status: 1
       }
     },
     {
