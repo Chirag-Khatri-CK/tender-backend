@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import config from "../config";
-import User from "../models/User";
-import Otp from "../models/Otp";
+import User from "../models/core/User";
+import Otp from "../models/core/Otp";
 import { ensureRoleDoc, generateAuthToken } from "../utils/authToken";
 import { AppError } from "../utils/AppError";
 

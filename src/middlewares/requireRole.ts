@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import User from '../models/User';
+import User from '../models/core/User';
 
 // require that req.user.role exists and matches one of allowed roles
 export default function requireRole(...allowed: string[]) {

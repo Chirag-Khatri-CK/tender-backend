@@ -1,11 +1,9 @@
 // models/Tender.js
 import mongoose, { Schema } from 'mongoose';
 
-
-// Sub-schemas
 const DateRawFormattedSchema = new mongoose.Schema({
     raw: { type: String, default: "" },        // original epoch string if present
-    formatted: { type: String, default: "" },  // human string
+    formatted: { type: String, default: "" },
     asDate: { type: Date, default: null }      // converted Date for queries
 }, { _id: false });
 

@@ -22,6 +22,7 @@ const corsOptions: CorsOptions = {
         "Content-Type",
         "Authorization",
         "x-correlation-id",
+        "ngrok-skip-browser-warning"
     ],
 
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],

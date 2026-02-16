@@ -1,4 +1,4 @@
-import Contractor from "../models/Contractor";
+import Contractor from "../models/contractor/Contractor";
 import { Types } from "mongoose";
 import { updateUserAndSplit } from "./user.controller";
 import { AppError } from "../utils/AppError";

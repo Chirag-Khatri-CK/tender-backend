@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import User from "../models/User";
+import User from "../models/core/User";
 import { ensureRoleDoc, generateAuthToken } from "../utils/authToken";
 import { passwordIsValid } from "../utils/security";
 import { AppError } from "../utils/AppError";

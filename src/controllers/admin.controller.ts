@@ -1,4 +1,4 @@
-import Admin from "../models/Admin";
+import Admin from "../models/core/Admin";
 import { Types } from "mongoose";
 import { updateUserAndSplit } from "./user.controller";
 import { AppError } from "../utils/AppError";

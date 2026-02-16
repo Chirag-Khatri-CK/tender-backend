@@ -2,7 +2,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import config from '../config';
-import User from '../models/User';
+import User from '../models/core/User';
 
 type JwtPayloadLike = { sub?: string; role?: string; iat?: number; exp?: number;[k: string]: any };
 

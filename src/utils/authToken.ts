@@ -2,9 +2,9 @@
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import config from "../config";
 import { Types, Model } from "mongoose";
-import Admin from "../models/Admin";
-import Contractor from "../models/Contractor";
-import Engineer from "../models/Engineer";
+import Admin from "../models/core/Admin";
+import Contractor from "../models/contractor/Contractor";
+import Engineer from "../models/engineer/Engineer";
 
 const ROLE_MODELS: Record<string, any> = {
   admin: Admin,

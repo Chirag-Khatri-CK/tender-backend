@@ -1,5 +1,5 @@
 // utils/sequence.ts
-import Counter from "../models/Counter";
+import Counter from "../models/core/Counter";
 
 export const pad = (n: number, size = 2) => String(n).padStart(size, "0");
 
