@@ -147,7 +147,6 @@ const TenderSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Index suggestions
 TenderSchema.index({ "generalInformation.systemTenderNo": 1 }, { unique: false });
 TenderSchema.index({ "generalInformation.tenderReferenceNo": 1 });
 
