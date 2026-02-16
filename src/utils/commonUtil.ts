@@ -19,8 +19,9 @@ export async function getNextDailySequence(key: string): Promise<number> {
     const MM = pad(now.getMonth() + 1);
     const DD = pad(now.getDate());
 
-    const counterKey = `${key}_${YYYY}${MM}${DD}`;
-
+    // const counterKey = `${key}_${YYYY}${MM}${DD}`; // if reset counter to each date
+    const counterKey = `${key}`;
+    
     const counter = await Counter.findByIdAndUpdate(
         counterKey,
         { $inc: { seq: 1 } },
