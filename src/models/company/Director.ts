@@ -33,7 +33,7 @@ const DirectorSchema = new mongoose.Schema(
             type: String
         },
 
-        din: {
+        din: { //Director Identification Number.
             type: String,
             match: /^[0-9]{8}$/,
             sparse: true
