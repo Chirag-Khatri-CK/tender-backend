@@ -10,6 +10,7 @@ export async function dashboardAnalytics(query: any) {
         listContractorsController({ limit, isPremium: "true" }),
         listTendersController({ limit })
     ]);
+    
 
     return {
         data: {
