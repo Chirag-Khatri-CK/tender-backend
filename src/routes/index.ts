@@ -23,7 +23,7 @@ router.use('/auth', authRoutes);
 router.use('/otp', otpRoutes);
 //  Protected routes
 router.use('/admin', verifyJwt, requireRole('admin'), adminRoutes);
-router.use('/contractor', verifyJwt, contractorRoutes);
+router.use('/contractor', verifyJwt, requireRole('admin', 'contractor'), contractorRoutes);
 router.use('/tender', verifyJwt, tenderRoutes);
 
 export default router;
