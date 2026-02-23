@@ -32,17 +32,12 @@ const QualificationSchema = new mongoose.Schema(
 
 const EngineerSchema = new mongoose.Schema(
   {
-    // userId: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: 'User',
-    //   required: true,
-    //   unique: true,
-    //   index: true,
-    // },
-    contractorId: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Contractor",
-      index: true
+      ref: 'User',
+      required: true,
+      unique: true,
+      index: true,
     },
     name: { type: String, required: true, trim: true },
     fatherName: { type: String, trim: true },

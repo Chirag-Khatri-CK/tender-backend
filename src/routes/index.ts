@@ -22,9 +22,8 @@ router.use('/debug/decrypt', decryptDebug);
 router.use('/auth', authRoutes);
 router.use('/otp', otpRoutes);
 //  Protected routes
-router.use(verifyJwt);
-router.use('/admin', requireRole('admin'), adminRoutes);
-router.use('/tender', requireRole('admin'), tenderRoutes);
-router.use('/contractor', requireRole('admin', 'contractor'), contractorRoutes);
+router.use('/admin', verifyJwt, requireRole('admin'), adminRoutes);
+router.use('/contractor', verifyJwt, contractorRoutes);
+router.use('/tender', verifyJwt, tenderRoutes);
 
 export default router;

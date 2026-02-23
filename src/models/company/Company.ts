@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 
 const CompanySchema = new mongoose.Schema(
     {
-        contractorId: {
+        userId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Contractor",
+            ref: "User",
             required: true,
             index: true
         },

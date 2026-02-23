@@ -1,4 +1,4 @@
-import Admin from "../models/core/Admin";
+import User, { UserRole } from "../models/core/User";
 import { Types } from "mongoose";
 import { updateUserAndSplit } from "./user.controller";
 import { AppError } from "../utils/AppError";
@@ -9,8 +9,19 @@ export async function createAdminController(
   permissions: string[] = []
 ) {
   if (!userId) throw new AppError(400, "userId required");
-  const doc = await Admin.create({ userId, permissions });
-  return { ok: true, admin: doc };
+
+  const user = await User.findById(userId);
+  if (!user) throw new AppError(404, "User not found");
+
+  user.role = UserRole.ADMIN;
+  user.permissions = permissions;
+
+  await user.save();
+
+  return {
+    ok: true,
+    admin: user
+  };
 }
 
 export async function updateAdminController(
@@ -21,13 +32,13 @@ export async function updateAdminController(
     throw new AppError(400, "Invalid Admin ID");
   }
 
-  const admin = await Admin.findById(id);
+  const admin = await User.findOne({ _id: id, role: "admin" });
   if (!admin) {
     throw new AppError(404, "Admin not found");
   }
 
   const { restBody } = await updateUserAndSplit({
-    userId: admin.userId.toString(),
+    userId: admin._id.toString(),
     body
   });
 
@@ -47,7 +58,7 @@ export async function getAdminController(
     throw new AppError(400, "Invalid Admin ID");
   }
 
-  const admin = await getUserWithRole(Admin, id);
+  const admin = await getUserWithRole(id, "admin");
   if (!admin) {
     throw new AppError(404, "Admin not found");
   }

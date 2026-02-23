@@ -1,113 +1,39 @@
 // src/utils/authToken.ts
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import config from "../config";
-import { Types, Model } from "mongoose";
-import Admin from "../models/core/Admin";
-import Contractor from "../models/contractor/Contractor";
-import Engineer from "../models/engineer/Engineer";
+import User from "../models/core/User";
 
-const ROLE_MODELS: Record<string, any> = {
-    admin: Admin,
-    contractor: Contractor,
-    engineer: Engineer,
-};
-
-export async function getRoleDoc(user: any) {
-    const Model = ROLE_MODELS[user.role];
-    if (!Model) throw new Error(`Unknown role: ${user.role}`);
-
-    return Model.findOne({ userId: user._id, isDeleted: false })
-        .select("_id")
-        .lean();
-}
 
 export async function generateAuthToken(user: any) {
-    const roleDoc: any = await getRoleDoc(user);
-    if (!roleDoc) throw new Error(`Role document for ${user.role} not found`);
-
     const payload = {
-        sub: roleDoc._id.toString(),
-        uid: user._id.toString(),
-        role: user.role,
+        userId: user._id,
+        role: user.role
     };
 
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
         payload,
         config.jwt.secret as Secret,
         { expiresIn: config.jwt.expiresIn } as SignOptions
     );
 
-    return { accessToken: token, roleId: roleDoc._id.toString(), userId: user._id.toString() };
+    return {
+        accessToken,
+        role: user.role,
+        userId: user._id
+    };
 }
 
-export async function getUserWithRole(Model: Model<any>, id: string) {
-    if (!Types.ObjectId.isValid(id)) {
-        throw new Error("Invalid ID");
-    }
+export async function getUserWithRole(id: string, role: string) {
+    const query: any = {
+        _id: id,
+        isDeleted: false,
+        isActive: true
+    };
 
-    const result = await Model.aggregate([
-        {
-            $match: {
-                _id: new Types.ObjectId(id),
-                isDeleted: false,
-                isActive: true
-            }
-        },
-        { $limit: 1 },
-        {
-            $lookup: {
-                from: "users",
-                localField: "userId",
-                foreignField: "_id",
-                as: "user"
-            }
-        },
-        { $unwind: "$user" },
+    if (role) query.role = role;
 
-        {
-            $project: {
-                "user.password": 0,
-                "user.__v": 0,
-                "__v": 0,
-            }
-        },
+    const user = await User.findOne(query).select("-password -__v").lean();
+    if (!user) throw new Error("User not found");
 
-        {
-            $replaceRoot: {
-                newRoot: {
-                    $mergeObjects: [
-                        "$user",
-                        "$$ROOT"
-                    ]
-                }
-            }
-        },
-
-        {
-            $project: {
-                user: 0,
-                status: 0,
-                isActive: 0,
-                isDeleted: 0
-            }
-        }
-    ]);
-
-    if (!result.length) {
-        throw new Error(`${Model} not found`);
-    }
-
-    return result[0];
+    return user;
 }
-
-/* ---------------------------- Ensure Role Doc ---------------------------- */
-export async function ensureRoleDoc(user: any) {
-    const Model = ROLE_MODELS[user.role];
-    if (!Model) throw new Error(`Unknown role: ${user.role}`);
-
-    const exists = await Model.findOne({ userId: user._id });
-    if (exists) return;
-
-    await Model.create({ userId: user._id });
-}
-

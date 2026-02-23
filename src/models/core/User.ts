@@ -13,17 +13,9 @@ export interface IUser extends Document {
   password: string;
   role: UserRole;
   isActive: boolean;
+  isDeleted: boolean;
   isVerified: boolean;
   permissions?: string[];
-  contractorProfile?: {
-    companyName?: string;
-    gstNumber?: string;
-    experienceYears?: number;
-  };
-  adminProfile?: {
-    level?: number;
-    department?: string;
-  };
   lastLoginAt?: Date;
 }
 
@@ -40,8 +32,8 @@ const UserSchema = new Schema<IUser>(
       index: true
     },
     isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: true },
     isVerified: { type: Boolean, default: false },
-
     permissions: [{ type: String }],
     lastLoginAt: Date
   },
