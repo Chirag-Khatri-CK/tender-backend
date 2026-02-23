@@ -7,9 +7,9 @@ import Contractor from "../models/contractor/Contractor";
 import Engineer from "../models/engineer/Engineer";
 
 const ROLE_MODELS: Record<string, any> = {
-  admin: Admin,
-  contractor: Contractor,
-  engineer: Engineer,
+    admin: Admin,
+    contractor: Contractor,
+    engineer: Engineer,
 };
 
 export async function getRoleDoc(user: any) {
@@ -76,7 +76,7 @@ export async function getUserWithRole(Model: Model<any>, id: string) {
             $replaceRoot: {
                 newRoot: {
                     $mergeObjects: [
-                        "$user", 
+                        "$user",
                         "$$ROOT"
                     ]
                 }

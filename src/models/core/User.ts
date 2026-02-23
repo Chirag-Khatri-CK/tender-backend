@@ -1,49 +1,51 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, Document } from "mongoose";
 
-const UserSchema = new mongoose.Schema(
+export enum UserRole {
+  USER = "user",
+  ADMIN = "admin",
+  CONTRACTOR = "contractor"
+}
+
+export interface IUser extends Document {
+  name: string;
+  email?: string;
+  phone?: string;
+  password: string;
+  role: UserRole;
+  isActive: boolean;
+  isVerified: boolean;
+  permissions?: string[];
+  contractorProfile?: {
+    companyName?: string;
+    gstNumber?: string;
+    experienceYears?: number;
+  };
+  adminProfile?: {
+    level?: number;
+    department?: string;
+  };
+  lastLoginAt?: Date;
+}
+
+const UserSchema = new Schema<IUser>(
   {
-    email: {
-      type: String,
-      unique: true,
-      sparse: true,
-      lowercase: true,
-      trim: true,
-    },
-    phone: {
-      type: String,
-      // unique: true,
-      sparse: true,
-      trim: true,
-    },
-    password: { type: String, select: false },
+    name: { type: String, required: true },
+    email: { type: String, unique: true, sparse: true },
+    phone: { type: String, unique: true, sparse: true },
+    password: { type: String, required: true },
     role: {
       type: String,
-      enum: ['admin', 'contractor', 'engineer'],
-      required: true,
+      enum: Object.values(UserRole),
+      default: UserRole.USER,
+      index: true
     },
-    // status: {
-    //   type: String,
-    //   enum: ['pending', 'active', 'suspended'],
-    //   default: 'pending',
-    // },
     isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false },
-    emailVerified: { type: Boolean, default: false },
-    phoneVerified: { type: Boolean, default: false },
-    name: { type: String },
-    isPremiumMember: { type: Boolean, default: false },
-    subscribeAt: { type: Date },
-    premiumExpiresAt: { type: Date },
-    premiumPlan: { type: String, enum: ["MONTHLY", "YEARLY", "LIFETIME", "FREE"], default: "FREE" },
+    isVerified: { type: Boolean, default: false },
+
+    permissions: [{ type: String }],
+    lastLoginAt: Date
   },
   { timestamps: true }
 );
 
-UserSchema.index({ _id: 1, isDeleted: 1 });
-UserSchema.index({ email: 1, isDeleted: 1 });
-UserSchema.index({ isActive: 1, isDeleted: 1 });
-UserSchema.index({ role: 1, status: 1 });
-UserSchema.index({ _id: 1, isDeleted: 1, isPremiumMember: 1 });
-UserSchema.index({ createdAt: -1 });
-
-export default mongoose.models.User || mongoose.model('User', UserSchema);
+export default mongoose.model<IUser>("User", UserSchema);
