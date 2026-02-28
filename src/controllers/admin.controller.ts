@@ -1,6 +1,5 @@
 import User, { UserRole } from "../models/core/User";
 import { Types } from "mongoose";
-import { updateUserAndSplit } from "./user.controller";
 import { AppError } from "../utils/AppError";
 import { getUserWithRole } from "../utils/authToken";
 
@@ -32,20 +31,23 @@ export async function updateAdminController(
     throw new AppError(400, "Invalid Admin ID");
   }
 
-  const admin = await User.findOne({ _id: id, role: "admin" });
+  const admin = await User.findOne({ _id: id, role: "admin", isDeleted: false });
+
   if (!admin) {
     throw new AppError(404, "Admin not found");
   }
 
-  const { restBody } = await updateUserAndSplit({
-    userId: admin._id.toString(),
-    body
-  });
+  const incoming = { ...body };
+  delete incoming._id;
+  delete incoming.isDeleted;
+  delete incoming.role;
+  delete incoming.password;
 
-  if (Object.keys(restBody).length > 0) {
-    Object.assign(admin, restBody);
-    await admin.save();
-  }
+  await User.findOneAndUpdate(
+    { _id: id, role: "admin", isDeleted: false },
+    incoming,
+    { new: true }
+  );
 
   return getAdminController(id, "Admin updated successfully");
 }

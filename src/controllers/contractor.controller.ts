@@ -1,6 +1,5 @@
 import { Types } from "mongoose";
 import User, { UserRole } from "../models/core/User";
-import { updateUserAndSplit } from "./user.controller";
 import { AppError } from "../utils/AppError";
 
 /* =========================================================
@@ -28,28 +27,31 @@ export async function updateContractorController(
   id: string,
   body: Record<string, any>
 ) {
-  if (!Types.ObjectId.isValid(id)) throw new AppError(400, "Invalid Contractor ID");
-
-  const user = await User.findOne({
-    _id: id,
-    role: UserRole.CONTRACTOR
-  });
-
-  if (!user) throw new AppError(404, "Contractor not found");
-
-  const { restBody } = await updateUserAndSplit({
-    userId: id,
-    body,
-  });
-
-  if (Object.keys(restBody).length > 0) {
-    Object.assign(user, restBody);
-    await user.save();
+  if (!Types.ObjectId.isValid(id)) {
+    throw new AppError(400, "Invalid Contractor ID");
   }
+
+  const contractor = await User.findOne({ _id: id, role: UserRole.CONTRACTOR, isDeleted: false });
+
+  if (!contractor) {
+    throw new AppError(404, "Contractor not found");
+  }
+
+  const incoming = { ...body };
+
+  delete incoming._id;
+  delete incoming.isDeleted;
+  delete incoming.role;
+  delete incoming.password;
+
+  await User.findOneAndUpdate(
+    { _id: id, role: UserRole.CONTRACTOR, isDeleted: false },
+    incoming,
+    { new: true }
+  );
 
   return getContractorController(id, "Contractor updated successfully");
 }
-
 
 /* =========================================================
    GET CONTRACTOR
