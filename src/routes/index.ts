@@ -8,6 +8,8 @@ import authRoutes from './auth.routes';
 import otpRoutes from './otp.routes';
 import decryptDebug from './decrypt.debug';     // debug decrypt route (public)
 import pubicRoutes from "./public.routes";
+//cron
+import cronRoutes from "./cron.routes";
 // protected
 import adminRoutes from './admin.routes';
 import contractorRoutes from './contractor.routes';
@@ -21,6 +23,10 @@ router.use('/', pubicRoutes);
 router.use('/debug/decrypt', decryptDebug);
 router.use('/auth', authRoutes);
 router.use('/otp', otpRoutes);
+
+// cron sync routes
+router.use('/cron', cronRoutes);
+
 //  Protected routes
 router.use('/admin', verifyJwt, requireRole('admin'), adminRoutes);
 router.use('/contractor', verifyJwt, requireRole('admin', 'contractor'), contractorRoutes);

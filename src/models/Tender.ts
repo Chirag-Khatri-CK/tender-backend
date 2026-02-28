@@ -143,6 +143,7 @@ const TenderSchema = new mongoose.Schema({
     cancelReason: { type: String, default: "" },
     cancelTime: { type: Date, default: null },
     tenderId: { type: String, default: "" },
+    externalSystemDisplayTenderId: { type: String, default: "" },
 }, {
     timestamps: true
 });

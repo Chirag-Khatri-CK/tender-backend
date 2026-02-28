@@ -8,6 +8,7 @@ import encryptionMiddleware from './middlewares/encryption';
 import corsMiddleware from "./middlewares/cors";
  // Routes
 import routes from "./routes/index";
+import { startAllCrons } from './cron';
 
 const app = express();
 app.use(corsMiddleware);
@@ -29,6 +30,9 @@ const port = config.port || 5000;
 mongoose.connect(config.db.uri)
   .then(() => {
     console.log('Connected to MongoDB');
+
+    startAllCrons(); 
+
     app.listen(port, () => {
       console.log(`gojo backend expansion on port ${port} (env=${config.env})`);
       logger.info('Server started', { meta: { env: config.env } });
