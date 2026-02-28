@@ -145,7 +145,7 @@ export async function listTendersController(query: any) {
     {
       $project: {
         _id: 1,
-        tenderId: 1,
+        externalSystemDisplayTenderId: 1,
         description: "$generalInformation.detailedDescription",
         tenderReferenceNo: "$generalInformation.tenderReferenceNo",
         department: {
