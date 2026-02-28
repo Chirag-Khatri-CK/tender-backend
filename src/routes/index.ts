@@ -14,6 +14,7 @@ import cronRoutes from "./cron.routes";
 import adminRoutes from './admin.routes';
 import contractorRoutes from './contractor.routes';
 import tenderRoutes from './tender.routes';
+import companyRoutes from './company.routes';
 
 const router = Router();
 
@@ -31,5 +32,6 @@ router.use('/cron', cronRoutes);
 router.use('/admin', verifyJwt, requireRole('admin'), adminRoutes);
 router.use('/contractor', verifyJwt, requireRole('admin', 'contractor'), contractorRoutes);
 router.use('/tender', verifyJwt, tenderRoutes);
+router.use('/company', verifyJwt, requireRole('admin', 'contractor'), companyRoutes);
 
 export default router;
