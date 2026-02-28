@@ -2,6 +2,7 @@ import axios from "axios";
 import https from "https";
 import Tender from "../models/Tender";
 import pLimit from "p-limit";
+import { generateTenderIds } from "../controllers/tender.controller";
 
 const BASE_URL = "https://eproc2.bihar.gov.in/EPSV2Web";
 
@@ -37,7 +38,7 @@ function buildDateRawFormatted(epochStr: string | null | number): {
     };
 }
 
-function mapGovTenderToApp(detail: any) {
+async function mapGovTenderToApp(detail: any) {
     // ── Date Schedule ──────────────────────────────────────────────
     const bidStart = getTemplateField(detail, "rfqdate", "bid_start_date");
     const bidEnd = getTemplateField(detail, "rfqdate", "bid_end_date");
@@ -201,6 +202,9 @@ function mapGovTenderToApp(detail: any) {
         : [];
     const tenderCreator = creatorDetail?.DealingOfficer || "";
 
+
+    const { slug } = await generateTenderIds(detail?.nit);
+
     // ── Final mapped object ────────────────────────────────────────
     return {
         generalInformation: {
@@ -259,7 +263,8 @@ function mapGovTenderToApp(detail: any) {
         },
 
         tenderId: detail.tenderid?.toString(),
-        externalSystemTenderId: detail.orgtenderid?.toString(),
+        externalSystemDisplayTenderId: detail.orgtenderid?.toString(),
+        slug: slug,
         status: "PUBLISHED" as const,
     };
 }
@@ -381,7 +386,7 @@ export async function syncTenders() {
                         token
                     );
 
-                    const mapped = mapGovTenderToApp(detail);
+                    const mapped = await mapGovTenderToApp(detail);
 
                     bulkOps.push({
                         replaceOne: {
@@ -402,7 +407,7 @@ export async function syncTenders() {
         console.log("Sync Completed");
 
         return {
-            message : "Sync Completed",
+            message: "Sync Completed",
             success: true
         }
 

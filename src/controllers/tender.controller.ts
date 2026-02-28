@@ -8,7 +8,7 @@ import {
 } from "../utils/commonUtil";
 import { AppError } from "../utils/AppError";
 
-async function generateTenderIds(title: string) {
+export async function generateTenderIds(title: string) {
   const seq = await getNextDailySequence("tender");
   const now = new Date();
 
