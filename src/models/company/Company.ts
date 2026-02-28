@@ -64,6 +64,23 @@ const CompanySchema = new mongoose.Schema(
         isDeleted: {
             type: Boolean,
             default: false
+        },
+
+        profileStatus: {
+            type: String,
+            enum: ["draft", "completed"],
+            default: "draft"
+        },
+
+        profileCompletion: {
+            type: Number,
+            default: 0
+        },
+
+        createdBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true
         }
     },
     { timestamps: true }

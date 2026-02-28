@@ -2,6 +2,13 @@ import mongoose from "mongoose";
 
 const QualificationSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true
+    },
+
     degree: { type: String, required: true },
     stream: { type: String },
     institute: { type: String },
