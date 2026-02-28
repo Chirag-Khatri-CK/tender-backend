@@ -71,9 +71,6 @@ async function calculateProfileCompletion(companyId: string) {
     return percentage;
 }
 
-/* =========================================================
-   CREATE COMPANY
-========================================================= */
 export async function createCompanyController(
     userId: string,
     body: Record<string, any>
@@ -93,9 +90,6 @@ export async function createCompanyController(
     };
 }
 
-/* =========================================================
-   UPDATE COMPANY
-========================================================= */
 export async function updateCompanyController(
     id: string,
     body: Record<string, any>,
@@ -124,9 +118,7 @@ export async function updateCompanyController(
     };
 }
 
-/* =========================================================
-   GET COMPANY (FULL PROFILE)
-========================================================= */
+
 export async function getCompanyController(
     id: string,
     userId: string,
