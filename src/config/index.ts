@@ -55,7 +55,7 @@ type AppConfig = {
 };
 
 const config: AppConfig = {
-    env: process.env.NODE_ENV || "development",
+    env: process.env.APP_ENV || "dev",
     port: Number(process.env.PORT) || 5000,
 
     db: {

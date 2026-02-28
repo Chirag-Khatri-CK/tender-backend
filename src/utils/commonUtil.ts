@@ -1,5 +1,5 @@
 // utils/sequence.ts
-import Counter from "../models/Counter";
+import Counter from "../models/core/Counter";
 
 export const pad = (n: number, size = 2) => String(n).padStart(size, "0");
 
@@ -19,7 +19,8 @@ export async function getNextDailySequence(key: string): Promise<number> {
     const MM = pad(now.getMonth() + 1);
     const DD = pad(now.getDate());
 
-    const counterKey = `${key}_${YYYY}${MM}${DD}`;
+    // const counterKey = `${key}_${YYYY}${MM}${DD}`; // if reset counter to each date
+    const counterKey = `${key}`;
 
     const counter = await Counter.findByIdAndUpdate(
         counterKey,
@@ -34,12 +35,11 @@ export const slugify = (text: string = "") =>
     text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").substring(0, 80);
 
 export async function generateUniqueSlug(base: string, model: any, suffix: string): Promise<string> {
-    let slug = `${slugify(base)}-${suffix}`.toLowerCase();
-    let attempt = 1;
+    const baseSlug = slugify(base);
+    let slug = `${baseSlug}-${suffix}`.toLowerCase();
 
-    while (await model.exists({ slug })) {
-        slug = `${slugify(base)}-${suffix}-${attempt++}`.toLowerCase();
-    }
+    const exists = await model.exists({ slug });
+    if (!exists) return slug;
 
-    return slug;
+    return `${slug}-${Date.now()}`;
 }

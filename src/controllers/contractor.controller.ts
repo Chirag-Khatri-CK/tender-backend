@@ -1,14 +1,28 @@
-import Contractor from "../models/Contractor";
 import { Types } from "mongoose";
-import { updateUserAndSplit } from "./user.controller";
+import User, { UserRole } from "../models/core/User";
 import { AppError } from "../utils/AppError";
-import { getUserWithRole } from "../utils/authToken";
 
-export async function createContractorController(payload: any) {
-  const doc = await Contractor.create(payload);
-  return { ok: true, contractor: doc };
+/* =========================================================
+   CREATE CONTRACTOR
+========================================================= */
+export async function createContractorController(userId: string) {
+  if (!Types.ObjectId.isValid(userId)) throw new AppError(400, "Invalid userId");
+
+  const user = await User.findById(userId);
+  if (!user) throw new AppError(404, "User not found");
+
+  if (user.role === UserRole.CONTRACTOR) throw new AppError(400, "Already contractor");
+
+  user.role = UserRole.CONTRACTOR;
+  await user.save();
+
+  return { ok: true, contractor: user };
 }
 
+
+/* =========================================================
+   UPDATE CONTRACTOR
+========================================================= */
 export async function updateContractorController(
   id: string,
   body: Record<string, any>
@@ -17,168 +31,127 @@ export async function updateContractorController(
     throw new AppError(400, "Invalid Contractor ID");
   }
 
-  const contractor = await Contractor.findById(id).exec();
+  const contractor = await User.findOne({ _id: id, role: UserRole.CONTRACTOR, isDeleted: false });
+
   if (!contractor) {
     throw new AppError(404, "Contractor not found");
   }
 
-  const { restBody } = await updateUserAndSplit({
-    userId: contractor.userId.toString(),
-    body,
-  });
+  const incoming = { ...body };
 
-  if (Object.keys(restBody).length > 0) {
-    Object.assign(contractor, restBody);
-    await contractor.save();
-  }
+  delete incoming._id;
+  delete incoming.isDeleted;
+  delete incoming.role;
+  delete incoming.password;
 
-  const fresh = await getContractorController(id, "Contrator updated successfully !");
-  return { contractor: fresh };
+  await User.findOneAndUpdate(
+    { _id: id, role: UserRole.CONTRACTOR, isDeleted: false },
+    incoming,
+    { new: true }
+  );
+
+  return getContractorController(id, "Contractor updated successfully");
 }
 
-export async function getContractorController(id: string, message?: string) {
-  if (!Types.ObjectId.isValid(id)) {
-    throw new AppError(400, "Invalid Contractor ID");
-  }
+/* =========================================================
+   GET CONTRACTOR
+========================================================= */
+export async function getContractorController(
+  id: string,
+  message?: string
+) {
+  if (!Types.ObjectId.isValid(id)) throw new AppError(400, "Invalid Contractor ID");
 
-  const contractor = await getUserWithRole(Contractor, id);
-  if (!contractor) throw new AppError(404, "not found");
+  const contractor = await User.findOne({
+    _id: id,
+    role: UserRole.CONTRACTOR,
+    isDeleted: false,
+    isActive: true
+  }).select("-password -__v");
+
+  if (!contractor) throw new AppError(404, "Contractor not found");
+
   return {
     success: true,
-    message: message  ?? "Contrator fetched successfully",
-    data: {
-      ...contractor
-    },
+    message: message ?? "Contractor fetched successfully",
+    data: contractor
   };
 }
 
+
+/* =========================================================
+   LIST CONTRACTORS
+========================================================= */
 export async function listContractorsController(query: any) {
   const {
     q,
-    sort = "createdAt",
     limit = "20",
     skip,
     page = "1",
     isActive = "true",
     isDeleted,
-    isPremium
+    isPremium,
+    sort = "desc"
   } = query as Record<string, string>;
 
-  const match: any = {};
+  const match: any = {
+    role: UserRole.CONTRACTOR
+  };
 
-  if (isDeleted !== undefined) {
-    match.isDeleted = String(isDeleted).toLowerCase() === "true";
-  } else {
+  if (isDeleted !== undefined)
+    match.isDeleted = isDeleted === "true";
+  else
     match.isDeleted = false;
-  }
 
-  if (isActive !== undefined) {
-    match.isActive = String(isActive).toLowerCase() === "true";
-  }
+  if (isActive !== undefined)
+    match.isActive = isActive === "true";
 
-  const userMatch: any = {};
+  if (isPremium === "true")
+    match.isPremiumMember = true;
 
-  if (isPremium === "true") {
-    userMatch["user.isPremiumMember"] = true;
-  }
+  if (isPremium === "false")
+    match.isPremiumMember = false;
 
-  if (isPremium === "false") {
-    userMatch["user.isPremiumMember"] = false;
-  }
-
-  // Search by q: companyName, gstNumber, contactPerson, contactNumber
   if (q) {
-    const re = new RegExp(String(q).trim(), "i");
+    const re = new RegExp(q.trim(), "i");
     match.$or = [
-      { companyName: re },
-      { gstNumber: re },
-      { contactPerson: re },
-      { contactNumber: re },
+      { name: re },
+      { email: re },
+      { phone: re }
     ];
   }
 
-  let sortDirection = -1;
-  if (sort) {
-    const dir = String(sort).trim().toLowerCase();
-    if (dir === "asc") sortDirection = 1;
-    if (dir === "desc") sortDirection = -1;
-  }
+  const numericLimit = Math.min(100, Math.max(1, Number(limit) || 20));
 
-  const sortObj = { createdAt: sortDirection };
-
-  const numericLimit = Math.max(1, Math.min(100, parseInt(limit as string, 10) || 20));
   let numericSkip = 0;
 
-  if (skip !== undefined) {
-    numericSkip = Math.max(0, parseInt(skip as string, 10) || 0);
-  } else if (page !== undefined) {
-    const numericPage = Math.max(1, parseInt(page as string, 10) || 1);
-    numericSkip = (numericPage - 1) * numericLimit;
-  }
+  if (skip !== undefined)
+    numericSkip = Math.max(0, Number(skip) || 0);
+  else
+    numericSkip = (Math.max(1, Number(page) || 1) - 1) * numericLimit;
 
-  const pipeline: any[] = [
-    { $match: match },
-    {
-      $lookup: {
-        from: "users",
-        localField: "userId",
-        foreignField: "_id",
-        as: "user"
-      }
-    },
-    { $unwind: "$user" },
-    Object.keys(userMatch).length ? { $match: userMatch } : null,
-    {
-      $project: {
-        "user.password": 0,
-        "user.__v": 0,
-        "__v": 0
-      }
-    },
-    {
-      $replaceRoot: {
-        newRoot: {
-          $mergeObjects: [
-            "$user",
-            "$$ROOT"
-          ]
-        }
-      }
-    },
-    {
-      $project: {
-        user: 0
-      }
-    },
-    { $sort: sortObj },
-    {
-      $facet: {
-        items: [{ $skip: numericSkip }, { $limit: numericLimit }],
-        total: [{ $count: "count" }],
-      },
-    },
-  ].filter(Boolean);
+  const sortDir = sort === "asc" ? 1 : -1;
 
-  const aggResult = await Contractor.aggregate(pipeline).exec();
-  const facet = aggResult[0] || { items: [], total: [] };
+  const [items, total] = await Promise.all([
+    User.find(match)
+      .select("-password -__v")
+      .sort({ createdAt: sortDir })
+      .skip(numericSkip)
+      .limit(numericLimit)
+      .lean(),
 
-  const items = facet.items || [];
-  const total = Array.isArray(facet.total) && facet.total[0] && facet.total[0].count ? facet.total[0].count : 0;
-
-  const currentPage =
-    skip !== undefined
-      ? Math.floor(numericSkip / numericLimit) + 1
-      : Math.max(1, parseInt(page as string, 10) || 1);
+    User.countDocuments(match)
+  ]);
 
   return {
     success: true,
     data: items,
-    message: "Contrators list fetched successfully",
+    message: "Contractors list fetched successfully",
     meta: {
       total,
       limit: numericLimit,
       skip: numericSkip,
-      page: currentPage,
-    },
+      page: Math.floor(numericSkip / numericLimit) + 1
+    }
   };
 }
