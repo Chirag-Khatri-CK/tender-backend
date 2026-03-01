@@ -88,4 +88,5 @@ const CompanySchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+CompanySchema.index({ _id: 1, isDeleted: 1 },{ unique: true });
 export default mongoose.models.Company || mongoose.model("Company", CompanySchema);
