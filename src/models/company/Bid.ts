@@ -21,8 +21,12 @@ const BidSchema = new mongoose.Schema({
         type: Number
     },
 
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
 }, { timestamps: true });
 
-BidSchema.index({ companyId: 1, isDeleted: 1 }, { unique: true });
+BidSchema.index({ companyId: 1, workName: 1, isDeleted: 1 }, { unique: true });
 
 export default mongoose.models.Bid || mongoose.model("Bid", BidSchema);

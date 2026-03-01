@@ -36,7 +36,6 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
-
 router.get("/list", async (req, res) => {
   try {
     const out = await listContractorsController(req.query);
