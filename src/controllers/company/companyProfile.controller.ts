@@ -1,15 +1,15 @@
 import { PipelineStage, Types } from "mongoose";
-import Company from "../models/company/Company";
-import Director from "../models/company/Director";
-import Engineer from "../models/engineer/Engineer";
-import Equipment from "../models/company/Equipment";
-import Registration from "../models/company/Registration";
-import Bid from "../models/company/Bid";
-import Audit from "../models/company/Audit";
-import ExperienceCertificate from "../models/company/ExperienceCertificate";
-import ExperienceQuantity from "../models/company/ExperienceQuantity";
-import ExistingCommitment from "../models/company/ExistingCommitment";
-import { AppError } from "../utils/AppError";
+import Company from "../../models/company/Company";
+import Director from "../../models/company/Director";
+import Engineer from "../../models/company/engineer/Engineer";
+import Equipment from "../../models/company/Equipment";
+import Registration from "../../models/company/Registration";
+import Bid from "../../models/company/Bid";
+import Audit from "../../models/company/Audit";
+import ExperienceCertificate from "../../models/company/ExperienceCertificate";
+import ExperienceQuantity from "../../models/company/ExperienceQuantity";
+import ExistingCommitment from "../../models/company/ExistingCommitment";
+import { AppError } from "../../utils/AppError";
 
 
 async function validateCompanyAccess(
@@ -27,19 +27,15 @@ async function validateCompanyAccess(
 
     if (!company) throw new AppError(404, "Company not found");
 
-    // if (
-    //     role !== "admin" &&
-    //     company.createdBy.toString() !== userId
-    // ) {
-    //     throw new AppError(403, "Unauthorized");
-    // }
+    if (   // role !== "admin" &&
+        company.createdBy.toString() !== userId
+    ) {
+        throw new AppError(403, "Unauthorized");
+    }
 
     return company;
 }
 
-/* =========================================================
-   PROFILE COMPLETION CALCULATOR (ALL MODELS INCLUDED)
-========================================================= */
 async function calculateProfileCompletion(companyId: string) {
     const company: any = await Company.findOne({ _id: companyId, isDeleted: false }).lean();
     if (!company) return 0;
@@ -118,12 +114,12 @@ export async function updateCompanyController(
     };
 }
 
-
 export async function getCompanyController(
     id: string,
     userId: string,
     role: string
 ) {
+
     await validateCompanyAccess(id, userId, role);
 
     const [
@@ -137,6 +133,7 @@ export async function getCompanyController(
         expCertificates,
         expQuantities,
         commitments,
+        percentage
     ] = await Promise.all([
         Company.findById(id).lean(),
         Director.find({ companyId: id, isDeleted: false }).lean(),
@@ -148,6 +145,7 @@ export async function getCompanyController(
         ExperienceCertificate.find({ companyId: id, isDeleted: false }).lean(),
         ExperienceQuantity.find({ companyId: id, isDeleted: false }).lean(),
         ExistingCommitment.find({ companyId: id, isDeleted: false }).lean(),
+        calculateProfileCompletion(id)
     ]);
 
     return {
@@ -164,6 +162,7 @@ export async function getCompanyController(
             expCertificates,
             expQuantities,
             commitments,
+            profileCompletion: percentage,
         },
     };
 }
@@ -228,7 +227,6 @@ export async function listCompaniesController(query: any) {
     };
 }
 
-
 export async function deleteCompanyController(id: string, role: string) {
 
     const company = await Company.findOneAndUpdate(
@@ -237,8 +235,19 @@ export async function deleteCompanyController(id: string, role: string) {
         { new: true }
     );
 
-    if (!company)
-        throw new AppError(404, "Company not found");
+    if (!company) throw new AppError(404, "Company not found");
+
+    await Promise.all([
+        Director.updateMany({ company: id, isDeleted: false }, { isDeleted: true }),
+        Engineer.updateMany({ company: id, isDeleted: false }, { isDeleted: true }),
+        Equipment.updateMany({ company: id, isDeleted: false }, { isDeleted: true }),
+        Registration.updateMany({ company: id, isDeleted: false }, { isDeleted: true }),
+        Bid.updateMany({ company: id, isDeleted: false }, { isDeleted: true }),
+        Audit.updateMany({ company: id, isDeleted: false }, { isDeleted: true }),
+        ExperienceCertificate.updateMany({ company: id, isDeleted: false }, { isDeleted: true }),
+        ExperienceQuantity.updateMany({ company: id, isDeleted: false }, { isDeleted: true }),
+        ExistingCommitment.updateMany({ company: id, isDeleted: false }, { isDeleted: true }),
+    ]);
 
     return {
         success: true,

@@ -5,11 +5,15 @@ import {
     getCompanyController,
     listCompaniesController,
     deleteCompanyController,
-} from "../controllers/companyProfile.controller";
+} from "../controllers/company/companyProfile.controller";
 import { AppError } from "../utils/AppError";
+import { validateCompanyAccess } from "../middlewares/validateCompanyAccess";
+import requireRole from '../middlewares/requireRole';
 
-const router = Router();
 
+// const router = Router();
+
+const router = Router({ mergeParams: true });
 
 router.post("/", async (req: any, res) => {
     try {
@@ -21,8 +25,7 @@ router.post("/", async (req: any, res) => {
     }
 });
 
-
-router.patch("/:id", async (req: any, res) => {
+router.patch("/:id", validateCompanyAccess, async (req: any, res) => {
     try {
         const out = await updateCompanyController(
             req.params.id,
@@ -41,8 +44,7 @@ router.patch("/:id", async (req: any, res) => {
     }
 });
 
-
-router.get("/list", async (req, res) => {
+router.get("/list", requireRole('admin'), async (req, res) => {
     try {
         const out = await listCompaniesController(req.query);
         return res.json(out);
@@ -52,12 +54,11 @@ router.get("/list", async (req, res) => {
     }
 });
 
-
-router.get("/:id", async (req: any, res) => {
+router.get("/:id", validateCompanyAccess, async (req: any, res) => {
     try {
         const out = await getCompanyController(
             req.params.id,
-            req.user._id,
+            req.user.userId,
             req.user.role
         );
         return res.json(out);
@@ -67,7 +68,7 @@ router.get("/:id", async (req: any, res) => {
     }
 });
 
-router.delete("/:id", async (req: any, res) => {
+router.delete("/:id", validateCompanyAccess, async (req: any, res) => {
     try {
         const out = await deleteCompanyController(
             req.params.id,
