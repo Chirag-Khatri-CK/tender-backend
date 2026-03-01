@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { signupController, loginController } from "../../controllers/auth.controller";
-import { AppError } from "../../utils/AppError";
+import { signupController, loginController } from "../controllers/auth.controller";
+import { AppError } from "../utils/AppError";
 
 const router = Router();
 

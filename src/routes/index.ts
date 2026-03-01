@@ -4,7 +4,7 @@ import verifyJwt from '../middlewares/verifyJwt';
 import requireRole from '../middlewares/requireRole';
 
 // Routes (public)
-import authRoutes from './company.routes/auth.routes';
+import authRoutes from './auth.routes';
 import otpRoutes from './otp.routes';
 import decryptDebug from './decrypt.debug';     // debug decrypt route (public)
 import pubicRoutes from "./public.routes";
