@@ -5,10 +5,10 @@ import {
     getCompanyController,
     listCompaniesController,
     deleteCompanyController,
-} from "../controllers/company/companyProfile.controller";
-import { AppError } from "../utils/AppError";
-import { validateCompanyAccess } from "../middlewares/validateCompanyAccess";
-import requireRole from '../middlewares/requireRole';
+} from "../../controllers/company/companyProfile.controller";
+import { AppError } from "../../utils/AppError";
+import { validateCompanyAccess } from "../../middlewares/validateCompanyAccess";
+import requireRole from '../../middlewares/requireRole';
 
 
 // const router = Router();

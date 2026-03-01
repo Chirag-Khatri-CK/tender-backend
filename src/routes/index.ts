@@ -4,7 +4,7 @@ import verifyJwt from '../middlewares/verifyJwt';
 import requireRole from '../middlewares/requireRole';
 
 // Routes (public)
-import authRoutes from './auth.routes';
+import authRoutes from './company.routes/auth.routes';
 import otpRoutes from './otp.routes';
 import decryptDebug from './decrypt.debug';     // debug decrypt route (public)
 import pubicRoutes from "./public.routes";
@@ -14,16 +14,16 @@ import cronRoutes from "./cron.routes";
 import adminRoutes from './admin.routes';
 import contractorRoutes from './contractor.routes';
 import tenderRoutes from './tender.routes';
-import companyRoutes from './company.routes';
-import directorRoutes from "./director.routes";
-import engineerRoutes from "./engineer.routes";
-import equipmentRoutes from "./equipment.routes";
-import registrationRoutes from "./registration.routes";
-import bidRoutes from "./bid.routes";
-import auditRoutes from "./audit.routes";
-import experienceCertificateRoutes from "./experienceCertificate.routes";
-import experienceQuantityRoutes from "./experienceQuantity.routes";
-import existingCommitmentRoutes from "./existingCommitment.routes";
+import companyRoutes from './company.routes/company.routes';
+import directorRoutes from "./company.routes/director.routes";
+import engineerRoutes from "./company.routes/engineer.routes";
+import equipmentRoutes from "./company.routes/equipment.routes";
+import registrationRoutes from "./company.routes/registration.routes";
+import bidRoutes from "./company.routes/bid.routes";
+import auditRoutes from "./company.routes/audit.routes";
+import experienceCertificateRoutes from "./company.routes/experienceCertificate.routes";
+import experienceQuantityRoutes from "./company.routes/experienceQuantity.routes";
+import existingCommitmentRoutes from "./company.routes/existingCommitment.routes";
 import { validateCompanyAccess } from '../middlewares/validateCompanyAccess';
 const router = Router();
 

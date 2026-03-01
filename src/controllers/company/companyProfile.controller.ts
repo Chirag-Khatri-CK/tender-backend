@@ -1,7 +1,7 @@
 import { PipelineStage, Types } from "mongoose";
 import Company from "../../models/company/Company";
 import Director from "../../models/company/Director";
-import Engineer from "../../models/company/engineer/Engineer";
+import Engineer from "../../models/company/Engineer";
 import Equipment from "../../models/company/Equipment";
 import Registration from "../../models/company/Registration";
 import Bid from "../../models/company/Bid";

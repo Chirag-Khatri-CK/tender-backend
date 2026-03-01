@@ -1,16 +1,16 @@
 
 import { Router } from "express";
-import { ExperienceCertificateController } from "../controllers/company/experienceCertificate.controller";
-import { AppError } from "../utils/AppError";
-import { validateCompanyAccess } from "../middlewares/validateCompanyAccess";
+import { AuditController } from "../../controllers/company/audit.controller";
+import { AppError } from "../../utils/AppError";
+import { validateCompanyAccess } from "../../middlewares/validateCompanyAccess";
 
 const router = Router();
 
 router.post("/:companyId", validateCompanyAccess, async (req: any, res) => {
   try {
-    const out = await ExperienceCertificateController.create(
+    const out = await AuditController.create(
       req.params.companyId,
-      req.body
+      req.body,
     );
     return res.json(out);
   } catch (err: any) {
@@ -21,7 +21,7 @@ router.post("/:companyId", validateCompanyAccess, async (req: any, res) => {
 
 router.get("/:companyId", validateCompanyAccess, async (req: any, res) => {
   try {
-    const out = await ExperienceCertificateController.list(req.params.companyId, req.query);
+    const out = await AuditController.list(req.params.companyId, req.query);
     return res.json(out);
   } catch (err: any) {
     const status = err instanceof AppError ? err.status : 400;
@@ -31,7 +31,7 @@ router.get("/:companyId", validateCompanyAccess, async (req: any, res) => {
 
 router.patch("/:id", async (req: any, res) => {
   try {
-    const out = await ExperienceCertificateController.update(req.params.id, req.body);
+    const out = await AuditController.update(req.params.id, req.body);
     return res.json(out);
   } catch (err: any) {
     const status = err instanceof AppError ? err.status : 400;
@@ -41,7 +41,7 @@ router.patch("/:id", async (req: any, res) => {
 
 router.delete("/:id", async (req: any, res) => {
   try {
-    const out = await ExperienceCertificateController.remove(req.params.id);
+    const out = await AuditController.remove(req.params.id);
     return res.json(out);
   } catch (err: any) {
     const status = err instanceof AppError ? err.status : 400;

@@ -1,14 +1,14 @@
 
 import { Router } from "express";
-import { ExistingCommitmentController } from "../controllers/company/existingCommitment.controller";
-import { AppError } from "../utils/AppError";
-import { validateCompanyAccess } from "../middlewares/validateCompanyAccess";
+import { BidController } from "../../controllers/company/bid.controller";
+import { AppError } from "../../utils/AppError";
+import { validateCompanyAccess } from "../../middlewares/validateCompanyAccess";
 
 const router = Router();
 
 router.post("/:companyId", validateCompanyAccess, async (req: any, res) => {
   try {
-    const out = await ExistingCommitmentController.create(
+    const out = await BidController.create(
       req.params.companyId,
       req.body
     );
@@ -21,7 +21,7 @@ router.post("/:companyId", validateCompanyAccess, async (req: any, res) => {
 
 router.get("/:companyId", validateCompanyAccess, async (req: any, res) => {
   try {
-    const out = await ExistingCommitmentController.list(req.params.companyId, req.query);
+    const out = await BidController.list(req.params.companyId, req.query);
     return res.json(out);
   } catch (err: any) {
     const status = err instanceof AppError ? err.status : 400;
@@ -31,7 +31,7 @@ router.get("/:companyId", validateCompanyAccess, async (req: any, res) => {
 
 router.patch("/:id", async (req: any, res) => {
   try {
-    const out = await ExistingCommitmentController.update(req.params.id, req.body);
+    const out = await BidController.update(req.params.id, req.body);
     return res.json(out);
   } catch (err: any) {
     const status = err instanceof AppError ? err.status : 400;
@@ -41,7 +41,7 @@ router.patch("/:id", async (req: any, res) => {
 
 router.delete("/:id", async (req: any, res) => {
   try {
-    const out = await ExistingCommitmentController.remove(req.params.id);
+    const out = await BidController.remove(req.params.id);
     return res.json(out);
   } catch (err: any) {
     const status = err instanceof AppError ? err.status : 400;
