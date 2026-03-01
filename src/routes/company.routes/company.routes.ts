@@ -11,9 +11,7 @@ import { validateCompanyAccess } from "../../middlewares/validateCompanyAccess";
 import requireRole from '../../middlewares/requireRole';
 
 
-// const router = Router();
-
-const router = Router({ mergeParams: true });
+const router = Router();
 
 router.post("/", async (req: any, res) => {
     try {

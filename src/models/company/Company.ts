@@ -77,7 +77,7 @@ const CompanySchema = new mongoose.Schema(
         profileStatus: {
             type: String,
             enum: ["draft", "completed"],
-            default: "draft"
+            default: "completed"
         },
 
         profileCompletion: {
