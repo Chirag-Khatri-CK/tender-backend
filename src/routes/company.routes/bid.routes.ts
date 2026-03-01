@@ -29,7 +29,7 @@ router.get("/:companyId", validateCompanyAccess, async (req: any, res) => {
   }
 });
 
-router.patch("/:id", async (req: any, res) => {
+router.patch("/:id", validateCompanyAccess, async (req: any, res) => {
   try {
     const out = await BidController.update(req.params.id, req.body);
     return res.json(out);
