@@ -2,7 +2,7 @@
 import { Types, Model } from "mongoose";
 import { AppError } from "../../utils/AppError";
 
-export function createCompanyChildCrud(ModelRef: Model<any>) {
+export function createCompanyChildCrud(ModelRef: Model<any>, entityName: string) {
   return {
     create: async (companyId: string, body: any) => {
       if (!Types.ObjectId.isValid(companyId))
@@ -26,7 +26,7 @@ export function createCompanyChildCrud(ModelRef: Model<any>) {
 
       return {
         success: true,
-        message: "Created successfully",
+        message: `${entityName} created successfully`,
         data: docs
       };
     },
@@ -38,7 +38,9 @@ export function createCompanyChildCrud(ModelRef: Model<any>) {
       const doc = await ModelRef.findByIdAndUpdate(id, body, { new: true });
       if (!doc) throw new AppError(404, "Not found");
 
-      return { success: true, message: "Updated", data: doc };
+      return {
+        success: true, message: `${entityName} updated successfully`, data: doc
+      };
     },
 
     remove: async (id: string) => {
@@ -50,7 +52,9 @@ export function createCompanyChildCrud(ModelRef: Model<any>) {
 
       if (!doc) throw new AppError(404, "Not found");
 
-      return { success: true, message: "Deleted" };
+      return {
+        success: true, message: `${entityName} deleted successfully`
+      };
     },
 
     list: async (companyId: string, query: any) => {
@@ -147,6 +151,7 @@ export function createCompanyChildCrud(ModelRef: Model<any>) {
       return {
         success: true,
         data: items,
+        message: `${entityName} list fetched successfully`,
         meta: {
           total,
           limit: numericLimit,
