@@ -150,5 +150,10 @@ const TenderSchema = new mongoose.Schema({
 
 TenderSchema.index({ "generalInformation.systemTenderNo": 1 }, { unique: false });
 TenderSchema.index({ "generalInformation.tenderReferenceNo": 1 });
+TenderSchema.index({ isDeleted: 1, status: 1 });
+TenderSchema.index({ isDeleted: 1, status: 1, createdAt: -1 });
+TenderSchema.index({ isDeleted: 1, status: 1, "dateSchedule.bidSubmissionDueDate.raw": 1 });
+TenderSchema.index({ isDeleted: 1, status: 1, externalSystemDisplayTenderId: 1 });
+TenderSchema.index({ isDeleted: 1, "generalInformation.procurementCategory": 1 });
 
 export default mongoose.model("Tender", TenderSchema);
