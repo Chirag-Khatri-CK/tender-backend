@@ -92,7 +92,8 @@ export async function getTenderController(params: {
 export async function listTendersController(query: any) {
   const {
     procurementCategory,
-    sort = "createdAt",
+    sortField = "createdAt",
+    sortOrder = "desc",
     limit = "20",
     skip,
     page = "1",
@@ -120,14 +121,19 @@ export async function listTendersController(query: any) {
     ];
   }
 
-  let sortDirection = -1;
-  if (sort) {
-    const dir = String(sort).trim().toLowerCase();
-    if (dir === "asc") sortDirection = 1;
-    if (dir === "desc") sortDirection = -1;
-  }
+  const allowedSortFields: any = {
+    createdAt: "createdAt",
+    endDate: "dateSchedule.bidSubmissionDueDate.raw",
+    tenderId: "externalSystemDisplayTenderId",
+  };
 
-  const sortObj = { createdAt: sortDirection };
+  const field = allowedSortFields[sortField] || "createdAt";
+
+  const sortDirection = sortOrder === "asc" ? 1 : -1;
+
+  const sortObj: any = {
+    [field]: sortDirection,
+  };
 
   const numericLimit = Math.max(1, Math.min(100, parseInt(limit as string, 10) || 20));
   let numericSkip = 0;
