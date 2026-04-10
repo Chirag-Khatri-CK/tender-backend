@@ -47,7 +47,7 @@ export async function updateContractorController(
   await User.findOneAndUpdate(
     { _id: id, role: UserRole.CONTRACTOR, isDeleted: false },
     incoming,
-    { new: true }
+    { returnDocument: 'after' }
   );
 
   return getContractorController(id, "Contractor updated successfully");

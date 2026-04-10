@@ -232,7 +232,7 @@ export async function deleteCompanyController(id: string, role: string) {
     const company = await Company.findOneAndUpdate(
         { _id: id, isDeleted: false },
         { isDeleted: true },
-        { new: true }
+        { returnDocument: 'after' }
     );
 
     if (!company) throw new AppError(404, "Company not found");

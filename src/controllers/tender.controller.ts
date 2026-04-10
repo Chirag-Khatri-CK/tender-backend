@@ -196,7 +196,7 @@ export async function updateTenderController(id: string, body: any) {
   const updated = await Tender.findByIdAndUpdate(
     id,
     { $set: body },
-    { new: true }
+    { returnDocument: 'after' }
   ).lean();
 
   if (!updated) throw new AppError(404, "Tender not found");
@@ -217,7 +217,7 @@ export async function softDeleteTenderController(id: string) {
   const updated = await Tender.findByIdAndUpdate(
     id,
     { $set: { isDeleted: true, isActive: false, status: "CLOSED" } },
-    { new: true }
+    { returnDocument: 'after' }
   ).lean();
 
   if (!updated) throw new AppError(404, "Tender not found");
@@ -250,7 +250,7 @@ export async function cancelTenderController(
   const updated = await Tender.findByIdAndUpdate(
     id,
     { $set: update },
-    { new: true }
+    { returnDocument: 'after' }
   ).lean();
 
   if (!updated) throw new AppError(404, "Tender not found");

@@ -35,7 +35,7 @@ export function createCompanyChildCrud(ModelRef: Model<any>, entityName: string)
       if (!Types.ObjectId.isValid(id))
         throw new AppError(400, "Invalid ID");
 
-      const doc = await ModelRef.findByIdAndUpdate(id, body, { new: true });
+      const doc = await ModelRef.findByIdAndUpdate(id, body, { returnDocument: 'after' });
       if (!doc) throw new AppError(404, "Not found");
 
       return {
@@ -47,7 +47,7 @@ export function createCompanyChildCrud(ModelRef: Model<any>, entityName: string)
       const doc = await ModelRef.findByIdAndUpdate(
         id,
         { isDeleted: true },
-        { new: true }
+        { returnDocument: 'after' }
       );
 
       if (!doc) throw new AppError(404, "Not found");

@@ -66,8 +66,8 @@ const TenderSchema = new mongoose.Schema({
         category: CategorySchema,
         tenderCreator: String,
         organizationHierarchy: [String],
-        systemTenderNo: { type: String, index: true }, // index for fast lookup
-        tenderReferenceNo: { type: String, index: true },
+        systemTenderNo: { type: String },
+        tenderReferenceNo: { type: String },
         tenderTitle: String,
         procurementCategory: String,
         tenderCurrency: String,

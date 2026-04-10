@@ -46,7 +46,7 @@ export async function updateAdminController(
   await User.findOneAndUpdate(
     { _id: id, role: "admin", isDeleted: false },
     incoming,
-    { new: true }
+    { returnDocument: 'after' }
   );
 
   return getAdminController(id, "Admin updated successfully");

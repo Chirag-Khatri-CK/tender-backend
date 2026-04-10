@@ -7,7 +7,7 @@ export async function getNextSequence(key: string): Promise<number> {
     const counter = await Counter.findByIdAndUpdate(
         key,
         { $inc: { seq: 1 } },
-        { new: true, upsert: true, setDefaultsOnInsert: true }
+        { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
     ).lean();
 
     return counter!.seq;
@@ -25,7 +25,7 @@ export async function getNextDailySequence(key: string): Promise<number> {
     const counter = await Counter.findByIdAndUpdate(
         counterKey,
         { $inc: { seq: 1 } },
-        { new: true, upsert: true, setDefaultsOnInsert: true }
+        { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
     ).lean();
 
     return counter!.seq;

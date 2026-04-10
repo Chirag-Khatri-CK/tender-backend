@@ -56,8 +56,6 @@ UserSchema.index(
 
 
 UserSchema.index({ role: 1, isDeleted: 1 });
-UserSchema.index({ email: 1 });
-UserSchema.index({ phone: 1 });
 UserSchema.index({ isDeleted: 1, isActive: 1 });
 
 export default mongoose.model<IUser>("User", UserSchema);

@@ -62,7 +62,7 @@ export async function requestOtpHandler(body: any) {
             status: "pending",
           },
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
     }
 
