@@ -9,6 +9,11 @@ const ExistingCommitmentSchema = new mongoose.Schema(
             index: true
         },
 
+        isDeleted: {
+            type: Boolean,
+            default: false
+        },
+
         workName: {
             type: String,
             required: true,
@@ -49,7 +54,6 @@ const ExistingCommitmentSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-ExistingCommitmentSchema.index({ companyId: 1, isDeleted: 1 }, { unique: true });
-ExistingCommitmentSchema.index({ companyId: 1, agreementNo: 1 }, { unique: true });
+ExistingCommitmentSchema.index({ companyId: 1, agreementNo: 1, isDeleted: 1 }, { unique: true });
 
 export default mongoose.models.ExistingCommitment || mongoose.model("ExistingCommitment", ExistingCommitmentSchema);
