@@ -1,6 +1,8 @@
-import { startTenderCron } from "./tender.cron";
+import { runTenderSyncJob, runTenderArchiveJob } from "./tender.job";
 
-export function startAllCrons() {
-    console.log("Initializing All Crons...");
-    startTenderCron();
+export async function startAllCrons() {
+    console.log("Executing All Cron Jobs...");
+
+    await runTenderSyncJob();
+    await runTenderArchiveJob();
 }
