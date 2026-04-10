@@ -8,7 +8,6 @@ import encryptionMiddleware from './middlewares/encryption';
 import corsMiddleware from "./middlewares/cors";
  // Routes
 import routes from "./routes/index";
-import { startAllCrons } from './cron';
 
 const app = express();
 app.use(corsMiddleware);
