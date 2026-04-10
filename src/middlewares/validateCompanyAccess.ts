@@ -10,7 +10,7 @@ export const validateCompanyAccess = async (
     next: NextFunction
 ) => {
     try {
-        const companyId = req.params.companyId || req.params.id;
+        const companyId = String(req.params.companyId || req.params.id);
         const userId = req.user?.userId;
         const role = req.user?.role;
 

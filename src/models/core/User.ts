@@ -6,7 +6,7 @@ export enum UserRole {
   CONTRACTOR = "contractor"
 }
 
-export interface IUser extends Document {
+export interface IUser {
   name: string;
   email?: string;
   phone?: string;

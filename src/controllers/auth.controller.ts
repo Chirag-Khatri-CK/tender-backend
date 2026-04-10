@@ -41,7 +41,7 @@ export async function signupController(
     email: emailNorm,
     password: hashed,
     name: name || "",
-    phone: phoneNorm || null,
+    phone: phoneNorm || "",
     role,
     isActive: true,
     isDeleted: false,
