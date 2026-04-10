@@ -13,10 +13,3 @@ export const verifyJwt = (req: Request, res: Response, next: NextFunction) => {
     return res.status(401).json({ message: 'Invalid token' });
   }
 };
-
-export const requireRole = (role: string) => (req: Request, res: Response, next: NextFunction) => {
-  const user = (req as any).user;
-  if(!user) return res.status(401).json({ message: 'Unauthorized' });
-  if(user.role !== role && user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
-  next();
-};
