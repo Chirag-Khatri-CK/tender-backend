@@ -9,9 +9,9 @@ const router = express.Router();
 
 router.get("/list", async (req, res) => {
     try {
-        if (req.query.status && String(req.query.status).toLowerCase() === "draft") {
-            req.query.status = "PUBLISHED";
-        }
+        req.query.status = "PUBLISHED";
+        req.query.sortField = "endDate";
+        req.query.sortOrder = "asc";
         const out = await listTendersController(req.query);
         return res.json(out);
     } catch (err: any) {
