@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import User, { UserRole, IUser } from "../models/core/User";
 import { generateAuthToken } from "../utils/authToken";
 import { AppError } from "../utils/AppError";
+import Company from "../models/company/Company";
 
 /* =========================================================
    SIGNUP CONTROLLER
@@ -102,6 +103,8 @@ export async function loginController(
 
   const { accessToken, userId } = await generateAuthToken(user);
 
+  const companies = await Company.find({ createdBy: user._id, isDeleted: false }).select("_id");
+
   return {
     success: true,
     status: 200,
@@ -110,7 +113,8 @@ export async function loginController(
       user: {
         userId,
         role: user.role,
-        fullName: user.name
+        fullName: user.name,
+        companyIds: companies.map(c => c._id)
       }
     }
   };
