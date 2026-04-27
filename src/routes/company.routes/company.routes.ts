@@ -25,12 +25,7 @@ router.post("/", async (req: any, res) => {
 
 router.patch("/:id", validateCompanyAccess, async (req: any, res) => {
     try {
-        const out = await updateCompanyController(
-            req.params.id,
-            req.body,
-            req.user._id,
-            req.user.role
-        );
+        const out = await updateCompanyController(req.params.id, req.body);
         return res.json(out);
     } catch (err: any) {
         const status = err instanceof AppError ? err.status : 500;
@@ -54,11 +49,7 @@ router.get("/list", requireRole('admin'), async (req, res) => {
 
 router.get("/:id", validateCompanyAccess, async (req: any, res) => {
     try {
-        const out = await getCompanyController(
-            req.params.id,
-            req.user.userId,
-            req.user.role
-        );
+        const out = await getCompanyController(req.params.id);
         return res.json(out);
     } catch (err: any) {
         const status = err instanceof AppError ? err.status : 400;

@@ -11,7 +11,7 @@ export const validateCompanyAccess = async (
 ) => {
     try {
         const companyId = String(req.params.companyId || req.params.id);
-        const userId = req.user._id;
+        const userId = req.user.userId;
         const role = req.user?.role;
 
         if (!Types.ObjectId.isValid(companyId)) throw new AppError(400, "Invalid Company ID");

@@ -12,30 +12,6 @@ import ExistingCommitment from "../../models/company/ExistingCommitment";
 import { AppError } from "../../utils/AppError";
 
 
-async function validateCompanyAccess(
-    companyId: string,
-    userId: string,
-    role: string
-) {
-    if (!Types.ObjectId.isValid(companyId))
-        throw new AppError(400, "Invalid Company ID");
-
-    const company = await Company.findOne({
-        _id: companyId,
-        isDeleted: false,
-    });
-
-    if (!company) throw new AppError(404, "Company not found");
-
-    if (   // role !== "admin" &&
-        company.createdBy.toString() !== userId
-    ) {
-        throw new AppError(403, "Unauthorized");
-    }
-
-    return company;
-}
-
 async function calculateProfileCompletion(companyId: string) {
     const company: any = await Company.findOne({ _id: companyId, isDeleted: false }).lean();
     if (!company) return 0;
@@ -88,11 +64,9 @@ export async function createCompanyController(
 
 export async function updateCompanyController(
     id: string,
-    body: Record<string, any>,
-    userId: string,
-    role: string
+    body: Record<string, any>
 ) {
-    const company = await validateCompanyAccess(id, userId, role);
+    const company = await Company.findOne({ _id: id, isDeleted: false });
 
     const incoming = { ...body };
     delete incoming._id;
@@ -115,12 +89,8 @@ export async function updateCompanyController(
 }
 
 export async function getCompanyController(
-    id: string,
-    userId: string,
-    role: string
+    id: string
 ) {
-
-    await validateCompanyAccess(id, userId, role);
 
     const [
         company,
