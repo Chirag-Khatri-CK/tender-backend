@@ -39,7 +39,7 @@ router.patch("/:id", validateCompanyAccess, async (req: any, res) => {
   }
 });
 
-router.delete("/:id", async (req: any, res) => {
+router.delete("/:id", validateCompanyAccess, async (req: any, res) => {
   try {
     const out = await EngineerController.remove(req.params.id);
     return res.json(out);
