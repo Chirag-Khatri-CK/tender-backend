@@ -67,10 +67,7 @@ router.get("/:companyId", validateCompanyAccess, async (req: any, res) => {
 
 router.delete("/:companyId", validateCompanyAccess, async (req: any, res) => {
     try {
-        const out = await deleteCompanyController(
-            req.params.companyId,
-            req.user.role
-        );
+        const out = await deleteCompanyController(req.params.companyId, req.user.role);
         return res.json(out);
     } catch (err: any) {
         const status = err instanceof AppError ? err.status : 400;
@@ -79,14 +76,14 @@ router.delete("/:companyId", validateCompanyAccess, async (req: any, res) => {
 });
 
 // company children
-router.use("/:companyId/director", directorRoutes);
-router.use("/:companyId/engineer", engineerRoutes);
-router.use("/:companyId/equipment", equipmentRoutes);
-router.use("/:companyId/registration", registrationRoutes);
-router.use("/:companyId/bid", bidRoutes);
-router.use("/:companyId/audit", auditRoutes);
-router.use("/:companyId/experience-certificate", experienceCertificateRoutes);
-router.use("/:companyId/experience-quantity", experienceQuantityRoutes);
-router.use("/:companyId/existing-commitment", existingCommitmentRoutes);
+router.use("/:companyId/director", validateCompanyAccess, directorRoutes);
+router.use("/:companyId/engineer", validateCompanyAccess, engineerRoutes);
+router.use("/:companyId/equipment", validateCompanyAccess, equipmentRoutes);
+router.use("/:companyId/registration", validateCompanyAccess, registrationRoutes);
+router.use("/:companyId/bid", validateCompanyAccess, bidRoutes);
+router.use("/:companyId/audit", validateCompanyAccess, auditRoutes);
+router.use("/:companyId/experience-certificate", validateCompanyAccess, experienceCertificateRoutes);
+router.use("/:companyId/experience-quantity", validateCompanyAccess, experienceQuantityRoutes);
+router.use("/:companyId/existing-commitment", validateCompanyAccess, existingCommitmentRoutes);
 
 export default router;

@@ -2,11 +2,11 @@
 import { Router } from "express";
 import { RegistrationController } from "../../controllers/company/registration.controller";
 import { AppError } from "../../utils/AppError";
-import { validateCompanyAccess } from "../../middlewares/validateCompanyAccess";
+
 
 const router = Router();
 
-router.post("/:companyId", validateCompanyAccess, async (req: any, res) => {
+router.post("/:companyId", async (req: any, res) => {
   try {
     const out = await RegistrationController.create(
       req.params.companyId,
@@ -19,7 +19,7 @@ router.post("/:companyId", validateCompanyAccess, async (req: any, res) => {
   }
 });
 
-router.get("/:companyId", validateCompanyAccess, async (req: any, res) => {
+router.get("/:companyId", async (req: any, res) => {
   try {
     const out = await RegistrationController.list(req.params.companyId, req.query);
     return res.json(out);
@@ -29,7 +29,7 @@ router.get("/:companyId", validateCompanyAccess, async (req: any, res) => {
   }
 });
 
-router.patch("/:id", validateCompanyAccess, async (req: any, res) => {
+router.patch("/:id", async (req: any, res) => {
   try {
     const out = await RegistrationController.update(req.params.id, req.body);
     return res.json(out);
@@ -39,7 +39,7 @@ router.patch("/:id", validateCompanyAccess, async (req: any, res) => {
   }
 });
 
-router.delete("/:id", validateCompanyAccess, async (req: any, res) => {
+router.delete("/:id", async (req: any, res) => {
   try {
     const out = await RegistrationController.remove(req.params.id);
     return res.json(out);

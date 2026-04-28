@@ -2,11 +2,10 @@
 import { Router } from "express";
 import { EngineerController } from "../../controllers/company/engineer.controller";
 import { AppError } from "../../utils/AppError";
-import { validateCompanyAccess } from "../../middlewares/validateCompanyAccess";
 
 const router = Router();
 
-router.post("/:companyId", validateCompanyAccess, async (req: any, res) => {
+router.post("/:companyId", async (req: any, res) => {
   try {
     const out = await EngineerController.create(
       req.params.companyId,
@@ -19,7 +18,7 @@ router.post("/:companyId", validateCompanyAccess, async (req: any, res) => {
   }
 });
 
-router.get("/:companyId", validateCompanyAccess, async (req: any, res) => {
+router.get("/:companyId", async (req: any, res) => {
   try {
     const out = await EngineerController.list(req.params.companyId, req.query);
     return res.json(out);
@@ -29,7 +28,7 @@ router.get("/:companyId", validateCompanyAccess, async (req: any, res) => {
   }
 });
 
-router.patch("/:id", validateCompanyAccess, async (req: any, res) => {
+router.patch("/:id", async (req: any, res) => {
   try {
     const out = await EngineerController.update(req.params.id, req.body);
     return res.json(out);
@@ -39,7 +38,7 @@ router.patch("/:id", validateCompanyAccess, async (req: any, res) => {
   }
 });
 
-router.delete("/:id", validateCompanyAccess, async (req: any, res) => {
+router.delete("/:id", async (req: any, res) => {
   try {
     const out = await EngineerController.remove(req.params.id);
     return res.json(out);

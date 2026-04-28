@@ -1,16 +1,14 @@
-
 import { Router } from "express";
 import { DirectorController } from "../../controllers/company/director.controller";
 import { AppError } from "../../utils/AppError";
-import { validateCompanyAccess } from "../../middlewares/validateCompanyAccess";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
-router.post("/:companyId", validateCompanyAccess, async (req: any, res) => {
+router.post("/", async (req: any, res) => {
   try {
     const out = await DirectorController.create(
-      req.params.companyId,
-      req.body,
+      req.params.companyId, // comes from parent
+      req.body
     );
     return res.json(out);
   } catch (err: any) {
@@ -19,9 +17,12 @@ router.post("/:companyId", validateCompanyAccess, async (req: any, res) => {
   }
 });
 
-router.get("/:companyId", validateCompanyAccess, async (req: any, res) => {
+router.get("/", async (req: any, res) => {
   try {
-    const out = await DirectorController.list(req.params.companyId,  req.query);
+    const out = await DirectorController.list(
+      req.params.companyId,
+      req.query
+    );
     return res.json(out);
   } catch (err: any) {
     const status = err instanceof AppError ? err.status : 400;
@@ -29,7 +30,7 @@ router.get("/:companyId", validateCompanyAccess, async (req: any, res) => {
   }
 });
 
-router.get("/:id", validateCompanyAccess, async (req: any, res) => {
+router.get("/:id", async (req: any, res) => {
   try {
     const out = await DirectorController.get(req.params.id);
     return res.json(out);
@@ -39,7 +40,7 @@ router.get("/:id", validateCompanyAccess, async (req: any, res) => {
   }
 });
 
-router.patch("/:id", validateCompanyAccess, async (req: any, res) => {
+router.patch("/:id", async (req: any, res) => {
   try {
     const out = await DirectorController.update(req.params.id, req.body);
     return res.json(out);
@@ -49,7 +50,7 @@ router.patch("/:id", validateCompanyAccess, async (req: any, res) => {
   }
 });
 
-router.delete("/:id", validateCompanyAccess, async (req: any, res) => {
+router.delete("/:id", async (req: any, res) => {
   try {
     const out = await DirectorController.remove(req.params.id);
     return res.json(out);
