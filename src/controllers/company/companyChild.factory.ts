@@ -1,8 +1,21 @@
-
 import { Types, Model } from "mongoose";
 import { AppError } from "../../utils/AppError";
 
 export function createCompanyChildCrud(ModelRef: Model<any>, entityName: string) {
+
+  const sanitize = (body: any) => {
+    const clean = { ...body };
+
+    delete clean._id;
+    delete clean.companyId;
+    delete clean.isDeleted;
+    delete clean.createdAt;
+    delete clean.updatedAt;
+    delete clean.__v;
+
+    return clean;
+  };
+
   return {
     create: async (companyId: string, body: any) => {
       if (!Types.ObjectId.isValid(companyId))
@@ -13,13 +26,13 @@ export function createCompanyChildCrud(ModelRef: Model<any>, entityName: string)
       if (Array.isArray(body)) {
         docs = await ModelRef.insertMany(
           body.map(item => ({
-            ...item,
+            ...sanitize(item),
             companyId
           }))
         );
       } else {
         docs = await ModelRef.create({
-          ...body,
+          ...sanitize(body),
           companyId
         });
       }
@@ -52,11 +65,18 @@ export function createCompanyChildCrud(ModelRef: Model<any>, entityName: string)
       if (!Types.ObjectId.isValid(id))
         throw new AppError(400, "Invalid ID");
 
-      const doc = await ModelRef.findByIdAndUpdate(id, body, { returnDocument: 'after' });
+      const doc = await ModelRef.findByIdAndUpdate(
+        id,
+        { $set: sanitize(body) },
+        { new: true }
+      );
+
       if (!doc) throw new AppError(404, "Not found");
 
       return {
-        success: true, message: `${entityName} updated successfully`, data: doc
+        success: true,
+        message: `${entityName} updated successfully`,
+        data: doc
       };
     },
 
@@ -154,11 +174,7 @@ export function createCompanyChildCrud(ModelRef: Model<any>, entityName: string)
 
       const items = facet.items || [];
       const total =
-        Array.isArray(facet.total) &&
-          facet.total[0] &&
-          facet.total[0].count
-          ? facet.total[0].count
-          : 0;
+        facet.total?.[0]?.count || 0;
 
       const currentPage =
         skip !== undefined
