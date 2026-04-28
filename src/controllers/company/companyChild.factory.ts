@@ -31,6 +31,23 @@ export function createCompanyChildCrud(ModelRef: Model<any>, entityName: string)
       };
     },
 
+    get: async (id: string) => {
+      if (!Types.ObjectId.isValid(id)) {
+        throw new AppError(400, "Invalid ID");
+      }
+
+      const doc = await ModelRef.findOne({ _id: id, isDeleted: false });
+      if (!doc) {
+        throw new AppError(404, "Not found");
+      }
+
+      return {
+        success: true,
+        message: `${entityName} fetched successfully`,
+        data: doc
+      };
+    },
+
     update: async (id: string, body: any) => {
       if (!Types.ObjectId.isValid(id))
         throw new AppError(400, "Invalid ID");
