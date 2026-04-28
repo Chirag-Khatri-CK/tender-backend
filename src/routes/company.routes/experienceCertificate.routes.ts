@@ -1,12 +1,10 @@
-
 import { Router } from "express";
 import { ExperienceCertificateController } from "../../controllers/company/experienceCertificate.controller";
 import { AppError } from "../../utils/AppError";
 
+const router = Router({ mergeParams: true });
 
-const router = Router();
-
-router.post("/:companyId", async (req: any, res) => {
+router.post("/", async (req: any, res) => {
   try {
     const out = await ExperienceCertificateController.create(
       req.params.companyId,
@@ -19,9 +17,12 @@ router.post("/:companyId", async (req: any, res) => {
   }
 });
 
-router.get("/:companyId", async (req: any, res) => {
+router.get("/", async (req: any, res) => {
   try {
-    const out = await ExperienceCertificateController.list(req.params.companyId, req.query);
+    const out = await ExperienceCertificateController.list(
+      req.params.companyId,
+      req.query
+    );
     return res.json(out);
   } catch (err: any) {
     const status = err instanceof AppError ? err.status : 400;
@@ -31,7 +32,10 @@ router.get("/:companyId", async (req: any, res) => {
 
 router.patch("/:id", async (req: any, res) => {
   try {
-    const out = await ExperienceCertificateController.update(req.params.id, req.body);
+    const out = await ExperienceCertificateController.update(
+      req.params.id,
+      req.body
+    );
     return res.json(out);
   } catch (err: any) {
     const status = err instanceof AppError ? err.status : 400;

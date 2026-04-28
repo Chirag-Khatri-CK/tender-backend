@@ -7,7 +7,7 @@ const router = Router({ mergeParams: true });
 router.post("/", async (req: any, res) => {
   try {
     const out = await DirectorController.create(
-      req.params.companyId, // comes from parent
+      req.params.companyId,
       req.body
     );
     return res.json(out);
