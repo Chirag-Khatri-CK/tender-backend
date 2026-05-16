@@ -10,14 +10,18 @@ export async function dashboardAnalytics(query: any) {
         listContractorsController({ limit, isPremium: "true" }),
         listTendersController({ limit })
     ]);
+    
 
     return {
         data: {
             latestUsers: latestUsers?.data,
             latestTenders: latestTenders?.data,
-            totalUserCount: latestUsers?.meta?.total,
-            totalTenderCount: latestTenders?.meta?.total,
-            premiumUsers: premiumUsers?.meta?.total,
+            statsData: {
+                totalUserCount: latestUsers?.meta?.total,
+                totalTenderCount: latestTenders?.meta?.total,
+                premiumUsers: premiumUsers?.meta?.total,
+                pendingApplication: 0,
+            }
         },
         success: true,
         message: "Dashboard insights retrieved successfully."

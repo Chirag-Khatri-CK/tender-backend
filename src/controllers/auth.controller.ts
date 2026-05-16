@@ -1,53 +1,55 @@
 import bcrypt from "bcryptjs";
-import User from "../models/User";
-import { ensureRoleDoc, generateAuthToken } from "../utils/authToken";
-import { passwordIsValid } from "../utils/security";
+import User, { UserRole, IUser } from "../models/core/User";
+import { generateAuthToken } from "../utils/authToken";
 import { AppError } from "../utils/AppError";
+import Company from "../models/company/Company";
 
-/* ---------------------------- SIGNUP ---------------------------- */
+/* =========================================================
+   SIGNUP CONTROLLER
+========================================================= */
 export async function signupController(
   email: string,
   password: string,
   name?: string,
   phone?: string,
-  role: string = "contractor"
+  role: UserRole = UserRole.CONTRACTOR
 ) {
+
   if (!email && !phone) throw new AppError(400, "email/phone required");
+
   if (!password) throw new AppError(400, "password required");
+
+  if (!Object.values(UserRole).includes(role)) throw new AppError(400, "Invalid role");
+
+  if (role === UserRole.ADMIN) throw new AppError(403, "Cannot signup as admin");
 
   const emailNorm = email ? email.toLowerCase().trim() : undefined;
   const phoneNorm = phone ? phone.trim() : undefined;
+
   const conditions = [
     emailNorm ? { email: emailNorm } : undefined,
     phoneNorm ? { phone: phoneNorm } : undefined,
-  ].filter(
-    (v): v is { email: string } | { phone: string } => v !== undefined
-  );
+  ].filter(Boolean) as any[];
 
-  let user = await User.findOne({ isDeleted: false, $or: conditions });
-  if (user) throw new AppError(400, "user already exists");
 
-  // const passCheck = passwordIsValid(password);
-  // if (!passCheck.success) {
-  //   throw new AppError(400, passCheck.reason || "invalid password");
-  // }
+  const existing = await User.findOne({ isDeleted: false, $or: conditions });
+
+  if (existing) throw new AppError(400, "User already exists");
 
   const hashed = await bcrypt.hash(password, 10);
 
-  user = await User.create({
+  const user: IUser = await User.create({
     email: emailNorm,
     password: hashed,
     name: name || "",
-    phone: phone || null,
+    phone: phoneNorm || "",
     role,
     isActive: true,
     isDeleted: false,
     emailVerified: true,
   });
 
-  await ensureRoleDoc(user);
-
-  const { accessToken, roleId, userId } = await generateAuthToken(user);
+  const { accessToken, userId } = await generateAuthToken(user);
 
   return {
     success: true,
@@ -55,38 +57,53 @@ export async function signupController(
     data: {
       accessToken,
       user: {
-        roleId, userId, fullName: user.name
+        userId,
+        role: user.role,
+        fullName: user.name
       }
     }
-  }
+  };
 }
 
-/* ---------------------------- LOGIN ---------------------------- */
-export async function loginController(email: string, password: string, phone: string) {
+
+
+/* =========================================================
+   LOGIN CONTROLLER
+========================================================= */
+export async function loginController(
+  email: string,
+  password: string,
+  phone?: string
+) {
+  /* ---------- VALIDATION ---------- */
+
   if (!email && !phone) throw new AppError(400, "email/phone required");
+
   if (!password) throw new AppError(400, "password required");
 
-  const emailNorm = email.toLowerCase().trim();
+  const emailNorm = email ? email.toLowerCase().trim() : undefined;
   const phoneNorm = phone ? phone.trim() : undefined;
+
   const conditions = [
     emailNorm ? { email: emailNorm } : undefined,
     phoneNorm ? { phone: phoneNorm } : undefined,
-  ].filter(
-    (v): v is { email: string } | { phone: string } => v !== undefined
-  );
+  ].filter(Boolean) as any[];
 
-  let user = await User.findOne({ isDeleted: false, $or: conditions }).select("+password");
+  const user = await User.findOne({ isDeleted: false, $or: conditions }).select("+password");
 
-  if (!user) throw new AppError(404, "user not found");
+  if (!user) throw new AppError(404, "User not found");
 
-  const ok = await bcrypt.compare(String(password), user.password || "");
-  if (!ok) throw new AppError(401, "invalid credentials");
+  const ok = await bcrypt.compare(password, user.password || "");
 
-  if (user.isDeleted) throw new AppError(403, "account removed");
-  if (!user.isActive) throw new AppError(403, "account not active");
-  await ensureRoleDoc(user);
+  if (!ok) throw new AppError(401, "Invalid credentials");
 
-  const { accessToken, roleId, userId } = await generateAuthToken(user);
+  if (user.isDeleted) throw new AppError(403, "Account removed");
+
+  if (!user.isActive) throw new AppError(403, "Account not active");
+
+  const { accessToken, userId } = await generateAuthToken(user);
+
+  const companies = await Company.find({ createdBy: user._id, isDeleted: false }).select("_id");
 
   return {
     success: true,
@@ -94,7 +111,10 @@ export async function loginController(email: string, password: string, phone: st
     data: {
       accessToken,
       user: {
-        roleId, userId, fullName: user.name
+        userId,
+        role: user.role,
+        fullName: user.name,
+        companyIds: companies.map(c => c._id)
       }
     }
   };

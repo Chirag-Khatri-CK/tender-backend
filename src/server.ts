@@ -29,6 +29,7 @@ const port = config.port || 5000;
 mongoose.connect(config.db.uri)
   .then(() => {
     console.log('Connected to MongoDB');
+
     app.listen(port, () => {
       console.log(`gojo backend expansion on port ${port} (env=${config.env})`);
       logger.info('Server started', { meta: { env: config.env } });

@@ -8,10 +8,13 @@ import authRoutes from './auth.routes';
 import otpRoutes from './otp.routes';
 import decryptDebug from './decrypt.debug';     // debug decrypt route (public)
 import pubicRoutes from "./public.routes";
+//cron
+import cronRoutes from "./cron.routes";
 // protected
 import adminRoutes from './admin.routes';
 import contractorRoutes from './contractor.routes';
 import tenderRoutes from './tender.routes';
+import companyRoutes from './company.routes/company.routes';
 
 const router = Router();
 
@@ -21,10 +24,15 @@ router.use('/', pubicRoutes);
 router.use('/debug/decrypt', decryptDebug);
 router.use('/auth', authRoutes);
 router.use('/otp', otpRoutes);
+
+// cron sync routes
+router.use('/cron', cronRoutes);
+
 //  Protected routes
-router.use(verifyJwt);
-router.use('/admin', requireRole('admin'), adminRoutes);
-router.use('/tender', requireRole('admin'), tenderRoutes);
-router.use('/contractor', requireRole('admin', 'contractor'), contractorRoutes);
+router.use('/admin', verifyJwt, requireRole('admin'), adminRoutes);
+router.use('/contractor', verifyJwt, requireRole('admin', 'contractor'), contractorRoutes);
+router.use('/tender', verifyJwt, tenderRoutes);
+router.use('/company', verifyJwt, companyRoutes);
+
 
 export default router;

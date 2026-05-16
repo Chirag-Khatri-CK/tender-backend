@@ -1,11 +1,9 @@
 // models/Tender.js
 import mongoose, { Schema } from 'mongoose';
 
-
-// Sub-schemas
 const DateRawFormattedSchema = new mongoose.Schema({
     raw: { type: String, default: "" },        // original epoch string if present
-    formatted: { type: String, default: "" },  // human string
+    formatted: { type: String, default: "" },
     asDate: { type: Date, default: null }      // converted Date for queries
 }, { _id: false });
 
@@ -68,8 +66,8 @@ const TenderSchema = new mongoose.Schema({
         category: CategorySchema,
         tenderCreator: String,
         organizationHierarchy: [String],
-        systemTenderNo: { type: String, index: true }, // index for fast lookup
-        tenderReferenceNo: { type: String, index: true },
+        systemTenderNo: { type: String },
+        tenderReferenceNo: { type: String },
         tenderTitle: String,
         procurementCategory: String,
         tenderCurrency: String,
@@ -145,12 +143,17 @@ const TenderSchema = new mongoose.Schema({
     cancelReason: { type: String, default: "" },
     cancelTime: { type: Date, default: null },
     tenderId: { type: String, default: "" },
+    externalSystemDisplayTenderId: { type: String, default: "" },
 }, {
     timestamps: true
 });
 
-// Index suggestions
 TenderSchema.index({ "generalInformation.systemTenderNo": 1 }, { unique: false });
 TenderSchema.index({ "generalInformation.tenderReferenceNo": 1 });
+TenderSchema.index({ isDeleted: 1, status: 1 });
+TenderSchema.index({ isDeleted: 1, status: 1, createdAt: -1 });
+TenderSchema.index({ isDeleted: 1, status: 1, "dateSchedule.bidSubmissionDueDate.raw": 1 });
+TenderSchema.index({ isDeleted: 1, status: 1, externalSystemDisplayTenderId: 1 });
+TenderSchema.index({ isDeleted: 1, "generalInformation.procurementCategory": 1 });
 
 export default mongoose.model("Tender", TenderSchema);

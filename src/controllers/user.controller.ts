@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import User from "../models/User";
+import User from "../models/core/User";
 
 const { Types } = mongoose;
 
@@ -22,7 +22,6 @@ type UpdateUserAndSplitArgs = {
 };
 
 
-const PREMIUM_DAYS = 30;
 
 function addDays(date: Date, days: number) {
     const d = new Date(date);
@@ -30,56 +29,17 @@ function addDays(date: Date, days: number) {
     return d;
 }
 
-
-export async function updateUserAndSplit({ userId, body }: UpdateUserAndSplitArgs) {
-    if (!Types.ObjectId.isValid(userId)) {
-        throw new Error("Invalid user id");
+function calculatePremiumExpiry(plan: string, from = new Date()) {
+    switch (plan) {
+        case "MONTHLY":
+            return addDays(from, 30);
+        case "YEARLY":
+            return addDays(from, 365);
+        case "LIFETIME":
+            return addDays(from, 365 * 5);
+        case "FREE":
+        default:
+            return null;
     }
-
-    const user = await User.findById(userId);
-    if (!user || user.isDeleted) {
-        throw new Error("User not found");
-    }
-    
-    const incoming = { ...body };
-    const fieldsToDelete = ["_id", "isDeleted"];
-    fieldsToDelete.forEach((f) => delete incoming[f]);
-
-    const userBody: Record<string, any> = {};
-    const restBody: Record<string, any> = {};
-
-    Object.entries(incoming).forEach(([key, value]) => {
-        if (USER_UPDATABLE_FIELDS.includes(key)) {
-            userBody[key] = value;
-        } else {
-            restBody[key] = value;
-        }
-    });
-
-    if ("isPremiumMember" in userBody) {
-        const wasPremium = Boolean(user.isPremiumMember);
-        const willBePremium = Boolean(userBody.isPremiumMember);
-        if (!wasPremium && willBePremium) {
-            const now = new Date();
-            userBody.subscribeAt = now;
-            userBody.premiumExpiresAt = addDays(now, PREMIUM_DAYS);
-        }
-
-        if (wasPremium && !willBePremium) {
-            userBody.premiumExpiresAt = null;
-        }
-    }
-
-
-    let updatedUser = null;
-
-    if (Object.keys(userBody).length > 0) {
-        updatedUser = await User.findOneAndUpdate(
-            { _id: userId, isDeleted: false },
-            userBody,
-            { new: true }
-        ).select("-password -__v");
-    }
-
-    return { updatedUser, userBody, restBody };
 }
+

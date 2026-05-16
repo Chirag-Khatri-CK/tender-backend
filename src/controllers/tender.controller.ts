@@ -8,7 +8,7 @@ import {
 } from "../utils/commonUtil";
 import { AppError } from "../utils/AppError";
 
-async function generateTenderIds(title: string) {
+export async function generateTenderIds(title: string) {
   const seq = await getNextDailySequence("tender");
   const now = new Date();
 
@@ -88,11 +88,11 @@ export async function getTenderController(params: {
   return { success: true, data: tender };
 }
 
-/* ---------------------------- LIST ---------------------------- */
 export async function listTendersController(query: any) {
   const {
     procurementCategory,
-    sort = "createdAt",
+    sortField = "createdAt",
+    sortOrder = "desc",
     limit = "20",
     skip,
     page = "1",
@@ -102,96 +102,79 @@ export async function listTendersController(query: any) {
 
   const match: any = { isDeleted: false };
 
-  if (procurementCategory) {
-    match["generalInformation.procurementCategory"] = procurementCategory;
-  }
-
-  if (status) {
-    match["status"] = status;
-  }
+  if (procurementCategory) match["generalInformation.procurementCategory"] = procurementCategory;
+  if (status) match["status"] = status;
 
   if (q) {
-    const re = new RegExp(String(q).trim(), "i");
-    match.$or = [
-      { "generalInformation.tenderTitle": re },
-      { "generalInformation.tenderReferenceNo": re },
-      { tenderId: re },
-      { slug: re },
-    ];
+    const trimmed = String(q).trim();
+    // $text index = fast. Regex fallback only for very short terms.
+    if (trimmed.length >= 3) {
+      match.$text = { $search: trimmed };
+    } else {
+      const re = new RegExp(trimmed, "i");
+      match.$or = [
+        { "generalInformation.tenderTitle": re },
+        { "generalInformation.tenderReferenceNo": re },
+        { tenderId: re },
+        { slug: re },
+      ];
+    }
   }
 
-  let sortDirection = -1;
-  if (sort) {
-    const dir = String(sort).trim().toLowerCase();
-    if (dir === "asc") sortDirection = 1;
-    if (dir === "desc") sortDirection = -1;
-  }
+  const allowedSortFields: Record<string, string> = {
+    createdAt: "createdAt",
+    endDate: "dateSchedule.bidSubmissionDueDate.raw",
+    tenderId: "externalSystemDisplayTenderId",
+  };
+  const field = allowedSortFields[sortField] ?? "createdAt";
+  const sortDirection = sortOrder === "asc" ? 1 : -1;
+  const sortObj: any = { [field]: sortDirection };
 
-  const sortObj = { createdAt: sortDirection };
-
-  const numericLimit = Math.max(1, Math.min(100, parseInt(limit as string, 10) || 20));
+  const numericLimit = Math.max(1, Math.min(100, parseInt(limit, 10) || 20));
   let numericSkip = 0;
 
   if (skip !== undefined) {
-    numericSkip = Math.max(0, parseInt(skip as string, 10) || 0);
-  } else if (page !== undefined) {
-    const numericPage = Math.max(1, parseInt(page as string, 10) || 1);
+    numericSkip = Math.max(0, parseInt(skip, 10) || 0);
+  } else {
+    const numericPage = Math.max(1, parseInt(page, 10) || 1);
     numericSkip = (numericPage - 1) * numericLimit;
   }
 
-  const pipeline: any[] = [
-    { $match: match },
-    { $sort: sortObj },
-    {
-      $project: {
-        _id: 1,
-        tenderId: 1,
-        description: "$generalInformation.detailedDescription",
-        tenderReferenceNo: "$generalInformation.tenderReferenceNo",
-        department: {
-          $cond: [
-            { $isArray: "$generalInformation.organizationHierarchy" },
-            [{ $arrayElemAt: ["$generalInformation.organizationHierarchy", 1] }],
-            []
-          ]
+  const [total, items] = await Promise.all([
+    Tender.countDocuments(match),
+    Tender.aggregate([
+      { $match: match },
+      { $sort: sortObj },
+      { $skip: numericSkip },
+      { $limit: numericLimit },
+      {
+        $project: {
+          _id: 1,
+          externalSystemDisplayTenderId: 1,
+          description: "$generalInformation.detailedDescription",
+          tenderReferenceNo: "$generalInformation.tenderReferenceNo",
+          department: {
+            $cond: [
+              { $isArray: "$generalInformation.organizationHierarchy" },
+              [{ $arrayElemAt: ["$generalInformation.organizationHierarchy", 1] }],
+              [],
+            ],
+          },
+          slug: 1,
+          endDate: "$dateSchedule.bidSubmissionDueDate",
+          status: 1,
         },
-        slug: 1,
-        endDate: "$dateSchedule.bidSubmissionDueDate",
-      }
-    },
-    {
-      $facet: {
-        items: [
-          { $skip: numericSkip },
-          { $limit: numericLimit },
-        ],
-        total: [
-          { $count: "count" },
-        ],
       },
-    },
-  ];
-
-  const aggResult = await Tender.aggregate(pipeline).exec();
-  const facet = aggResult[0] || { items: [], total: [] };
-
-  const items = facet.items || [];
-  const total = Array.isArray(facet.total) && facet.total[0] && facet.total[0].count ? facet.total[0].count : 0;
+    ]).exec(),
+  ]);
 
   const currentPage =
-    skip !== undefined
-      ? Math.floor(numericSkip / numericLimit) + 1
-      : Math.max(1, parseInt(page as string, 10) || 1);
+    skip !== undefined ? Math.floor(numericSkip / numericLimit) + 1 : Math.max(1, parseInt(page, 10) || 1);
 
   return {
     success: true,
     data: items,
-    meta: {
-      total,
-      limit: numericLimit,
-      skip: numericSkip,
-      page: currentPage,
-    },
+    meta: { total, limit: numericLimit, skip: numericSkip, page: currentPage },
   };
 }
 
@@ -213,7 +196,7 @@ export async function updateTenderController(id: string, body: any) {
   const updated = await Tender.findByIdAndUpdate(
     id,
     { $set: body },
-    { new: true }
+    { returnDocument: 'after' }
   ).lean();
 
   if (!updated) throw new AppError(404, "Tender not found");
@@ -234,7 +217,7 @@ export async function softDeleteTenderController(id: string) {
   const updated = await Tender.findByIdAndUpdate(
     id,
     { $set: { isDeleted: true, isActive: false, status: "CLOSED" } },
-    { new: true }
+    { returnDocument: 'after' }
   ).lean();
 
   if (!updated) throw new AppError(404, "Tender not found");
@@ -267,7 +250,7 @@ export async function cancelTenderController(
   const updated = await Tender.findByIdAndUpdate(
     id,
     { $set: update },
-    { new: true }
+    { returnDocument: 'after' }
   ).lean();
 
   if (!updated) throw new AppError(404, "Tender not found");
@@ -276,5 +259,27 @@ export async function cancelTenderController(
     success: true,
     message: "Tender cancelled",
     data: updated,
+  };
+}
+
+export async function archiveTendersController() {
+  const now = Date.now();
+
+  const result = await Tender.updateMany(
+    {
+      status: "PUBLISHED",
+      "dateSchedule.bidSubmissionDueDate.raw": { $lt: now },
+    },
+    {
+      $set: { status: "ARCHIVED" },
+    }
+  );
+
+  return {
+    success: true,
+    data: {
+      matched: result.matchedCount,
+      archived: result.modifiedCount,
+    },
   };
 }

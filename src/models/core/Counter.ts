@@ -1,7 +1,7 @@
 // src/models/Counter.ts
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export interface ICounter extends Document {
+export interface ICounter  {
     _id: string;   // e.g. "tender_20251207"
     seq: number;
     createdAt: Date;
