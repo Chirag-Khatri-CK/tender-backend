@@ -16,11 +16,13 @@ router.post("/signup", async (req, res) => {
     );
     return res.status(200).json(result);
   } catch (err: any) {
+    console.error("SIGNUP ERROR:", err);
+
     const status = err instanceof AppError ? err.status : 500;
-    const message = err instanceof AppError ? err.message : "internal error";
-    return res.status(200).json({
+    const message = err instanceof AppError ? err.message : err.message || "internal error";
+
+    return res.status(status).json({
       success: false,
-      status,
       message,
     });
   }
@@ -32,11 +34,13 @@ router.post("/login", async (req, res) => {
     const result = await loginController(email, password, phone);
     return res.status(200).json(result);
   } catch (err: any) {
+    console.error("LOGIN ERROR:", err);
+
     const status = err instanceof AppError ? err.status : 500;
-    const message = err instanceof AppError ? err.message : "internal error";
-    return res.status(200).json({
+    const message = err instanceof AppError ? err.message : err.message || "internal error";
+
+    return res.status(status).json({
       success: false,
-      status,
       message,
     });
   }
