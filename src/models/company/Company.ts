@@ -98,29 +98,21 @@ const CompanySchema = new mongoose.Schema(
 );
 
 
-CompanySchema.pre("validate", async function (next) {
-    if (!this.name) return next();
-
-    // only regenerate if new or name changed
-    if (!this.isModified("name")) return next();
+CompanySchema.pre("validate", async function () {
+    if (!this.name) return;
+    if (!this.isModified("name")) return;
 
     const baseSlug = slugify(this.name, { lower: true, strict: true, trim: true });
-
     let slug = baseSlug;
     let count = 1;
 
-    while (
-        await mongoose.models.Company.findOne({
-            slug,
-            _id: { $ne: this._id }
-        })
-    ) {
+    const Company = mongoose.models.Company;
+
+    while (await Company.findOne({ slug, _id: { $ne: this._id } })) {
         slug = `${baseSlug}-${count++}`;
     }
 
     this.slug = slug;
-
-    next();
 });
 
 export default mongoose.models.Company || mongoose.model("Company", CompanySchema);
