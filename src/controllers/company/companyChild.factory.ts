@@ -120,12 +120,24 @@ export function createCompanyChildCrud(ModelRef: Model<any>, entityName: string)
       // Search
       if (q) {
         const re = new RegExp(q.trim(), "i");
-        match.$or = [
-          { name: re },
-          { designation: re },
-          { pan: re },
-          { din: re },
+
+        const searchableFields = [
+          "name",
+          "email",
+          "phone",
+          "designation",
+          "pan",
+          "gstin",
+          "din",
+          "cin",
+          "aadhaar",
+          "licenseNumber",
+          "registrationNumber",
         ];
+
+        match.$or = searchableFields.map((field) => ({
+          [field]: re,
+        }));
       }
 
       // Sorting
