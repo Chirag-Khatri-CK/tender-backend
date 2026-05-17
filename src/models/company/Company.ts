@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import slugify from "slugify";
 
 const CompanySchema = new mongoose.Schema(
     {
@@ -8,11 +9,19 @@ const CompanySchema = new mongoose.Schema(
             required: true,
             index: true
         },
-        
+
         name: {
             type: String,
             required: true,
             trim: true,
+            index: true
+        },
+
+        slug: {
+            type: String,
+            required: true,
+            unique: true,
+            lowercase: true,
             index: true
         },
 
@@ -88,5 +97,30 @@ const CompanySchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-CompanySchema.index({ _id: 1, isDeleted: 1 },{ unique: true });
+
+CompanySchema.pre("validate", async function (next) {
+    if (!this.name) return next();
+
+    // only regenerate if new or name changed
+    if (!this.isModified("name")) return next();
+
+    const baseSlug = slugify(this.name, { lower: true, strict: true, trim: true });
+
+    let slug = baseSlug;
+    let count = 1;
+
+    while (
+        await mongoose.models.Company.findOne({
+            slug,
+            _id: { $ne: this._id }
+        })
+    ) {
+        slug = `${baseSlug}-${count++}`;
+    }
+
+    this.slug = slug;
+
+    next();
+});
+
 export default mongoose.models.Company || mongoose.model("Company", CompanySchema);
